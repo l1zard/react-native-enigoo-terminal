@@ -24,3 +24,11 @@ export function createCsobPayment(
 ): void {
   return EnigooTerminal.createCsobPayment(price, ipAddress, port);
 }
+
+export function createCsobRefund(
+  price: string,
+  ipAddress: string,
+  port: number
+): void {
+  return EnigooTerminal.createCsobRefund(price, ipAddress, port);
+}

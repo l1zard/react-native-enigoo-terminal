@@ -49,5 +49,13 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
     emit(new JSONObject().put("type", "CREATE_PAYMENT").put("status", "SUCCESS").toString());
   }
 
+  @ReactMethod
+  public void createCsobRefund(String price, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
+    Socket s = new Connection(ipAddress, port).execute().get();
+    new SendMessage(s, new Payment().createRefund(Double.parseDouble(price))).execute();
+
+    emit(new JSONObject().put("type", "CREATE_REFUND").put("status", "SUCCESS").toString());
+  }
+
 
 }
