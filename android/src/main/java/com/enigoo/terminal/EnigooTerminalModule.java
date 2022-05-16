@@ -34,7 +34,7 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void createPayment(String price, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
+  public void createCsobPayment(String price, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
     Socket s = new Connection(ipAddress, port).execute().get();
     new SendMessage(s, new Payment().createPayment(Double.parseDouble(price))).execute();
 

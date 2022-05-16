@@ -17,6 +17,10 @@ const EnigooTerminal = NativeModules.EnigooTerminal
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return EnigooTerminal.multiply(a, b);
+export function createCsobPayment(
+  price: string,
+  ipAddress: string,
+  port: number
+): void {
+  return EnigooTerminal.createCsobPayment(price, ipAddress, port);
 }
