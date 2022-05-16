@@ -95,7 +95,7 @@ public class Connection extends AsyncTask<Void, Void, Socket> {
                 }
 
                 if (res != null) {
-                    CsobTerminalModule.emit(res.toJsonString());
+                    EnigooTerminalModule.emit(res.toJsonString());
                 }
 
                 socket.close();

@@ -7,6 +7,14 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.concurrent.ExecutionException;
 
 @ReactModule(name = EnigooTerminalModule.NAME)
 public class EnigooTerminalModule extends ReactContextBaseJavaModule {
