@@ -1,4 +1,4 @@
-package com.reactnativeenigooterminal;
+package com.enigoo.terminal;
 
 import androidx.annotation.NonNull;
 
