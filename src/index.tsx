@@ -21,7 +21,7 @@ export function createCsobPayment(
   price: string,
   ipAddress: string,
   port: number,
-  deviceId: string,
+  deviceId: string
 ): void {
   return EnigooTerminal.createCsobPayment(price, ipAddress, port, deviceId);
 }
@@ -30,7 +30,7 @@ export function createCsobRefund(
   price: string,
   ipAddress: string,
   port: number,
-  deviceId: string,
+  deviceId: string
 ): void {
   return EnigooTerminal.createCsobRefund(price, ipAddress, port, deviceId);
 }
