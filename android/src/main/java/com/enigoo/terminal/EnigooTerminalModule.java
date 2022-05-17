@@ -18,19 +18,19 @@ import java.util.concurrent.ExecutionException;
 
 @ReactModule(name = EnigooTerminalModule.NAME)
 public class EnigooTerminalModule extends ReactContextBaseJavaModule {
-    public static final String NAME = "EnigooTerminal";
-    private static ReactApplicationContext reactApplicationContext = null;
+  public static final String NAME = "EnigooTerminal";
+  private static ReactApplicationContext reactApplicationContext = null;
 
-    public EnigooTerminalModule(ReactApplicationContext reactContext) {
-        super(reactContext);
-        reactApplicationContext = reactContext;
-    }
+  public EnigooTerminalModule(ReactApplicationContext reactContext) {
+    super(reactContext);
+    reactApplicationContext = reactContext;
+  }
 
-    @Override
-    @NonNull
-    public String getName() {
-        return NAME;
-    }
+  @Override
+  @NonNull
+  public String getName() {
+    return NAME;
+  }
 
   @ReactMethod
   public static void emit(String data) {
@@ -42,17 +42,17 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void createCsobPayment(String price, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
+  public void createCsobPayment(String price, String ipAddress, int port, String deviceId) throws IOException, JSONException, ExecutionException, InterruptedException {
     Socket s = new Connection(ipAddress, port).execute().get();
-    new SendMessage(s, new Payment().createPayment(Double.parseDouble(price))).execute();
+    new SendMessage(s, new Payment(deviceId).createPayment(Double.parseDouble(price))).execute();
 
     emit(new JSONObject().put("type", "CREATE_PAYMENT").put("status", "SUCCESS").toString());
   }
 
   @ReactMethod
-  public void createCsobRefund(String price, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
+  public void createCsobRefund(String price, String ipAddress, int port, String deviceId) throws IOException, JSONException, ExecutionException, InterruptedException {
     Socket s = new Connection(ipAddress, port).execute().get();
-    new SendMessage(s, new Payment().createRefund(Double.parseDouble(price))).execute();
+    new SendMessage(s, new Payment(deviceId).createRefund(Double.parseDouble(price))).execute();
 
     emit(new JSONObject().put("type", "CREATE_REFUND").put("status", "SUCCESS").toString());
   }

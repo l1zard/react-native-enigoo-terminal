@@ -3,7 +3,7 @@
 ## Vytvoření platby
 
 ```java
-createCsobPayment(String price, String ipAddress, int port)
+createCsobPayment(String price, String ipAddress, int port, String deviceId)
 ```
 
 Vytvoří platbu na platební terminál. Cena musí být string ve tvaru např.:  “100” nebo “100.0”.
@@ -13,7 +13,7 @@ Po vytvoření platby terminál čeká na zaplacení po dobu 1. minuty poté pla
 ### Refundace platby
 
 ```java
-createCsobRefund(String price, String ipAddress, int port)
+createCsobRefund(String price, String ipAddress, int port, String deviceId)
 ```
 
 Vytvoří refundaci na platební terminál
