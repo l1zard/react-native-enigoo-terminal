@@ -1,27 +1,77 @@
-# react-native-enigoo-terminal
+# ČSOB - Terminál dokumentace
 
-Enigoo Terminal
+## Vytvoření platby
 
-## Installation
-
-```sh
-npm install react-native-enigoo-terminal
+```java
+createCsobPayment(String price, String ipAddress, int port, String deviceId)
 ```
 
-## Usage
+Vytvoří platbu na platební terminál. Cena musí být string ve tvaru např.:  “100” nebo “100.0”.
 
-```js
-import { multiply } from "react-native-enigoo-terminal";
+Po vytvoření platby terminál čeká na zaplacení po dobu 1. minuty poté platbu vystornuje.
 
-// ...
+### Refundace platby
 
-const result = await multiply(3, 7);
+```java
+createCsobRefund(String price, String ipAddress, int port, String deviceId)
 ```
 
-## Contributing
+Vytvoří refundaci na platební terminál
 
-See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+## Terminal Listener
 
-## License
+```jsx
+DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
+```
 
-MIT
+### Vytvoření platby **📞**
+
+```json
+{
+	type: "CREATE_PAYMENT"
+	status: "SUCCESS"
+}
+```
+
+### Dokončení platby - po zaplacení **📞**
+
+```json
+{
+	type: "PURCHASE"
+	status: "SUCCESS"
+}
+```
+
+### Seznam všech typů a stavů
+
+- Typ
+
+  `CREATE_PAYMENT`  - Vytvoření platby
+
+  `CREATE_REFUND`  - Vytvoření refundace
+
+  `PURCHASE`  - Platba
+
+  `RETURN`  - Vrácení prostředků na kartu
+
+  `REVERSAL`  - slouží ke zrušení poslední podpisové transakce provedené na platebním terminálu, v případě nesouhlasu podpisu. Může být proveden pouze bezprostředně po platební transakci a mezi platební transakcí a jejím reversalem nesmí být provedena uzávěrka.
+
+- Stav
+
+  `SUCCESS`  - Všechno proběhlo v pořádku
+
+  `DEFAULT_ERROR`  - Chyba s kartou nebo terminálem
+
+  `CANCEL`  - Zrušeno uživatelem nebo chybný pin
+
+  `CARD_ERROR`  - Chyba s kartou
+
+  `CARD_EXPIRED`  - Karta je expirovaná
+
+  `CARD_YOUNG`  - Karta ještě nezačala platit
+
+  `CARD_NO_ENOUGH_MONEY`  - Nedostatek prostředků na kartě
+
+  `TIMEOUT`  - Čas pro transakci vypršel
+
+  `CARD_BLOCKED`  - Karta je zablokovaná
