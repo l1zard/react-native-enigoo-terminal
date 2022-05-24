@@ -1,5 +1,7 @@
 package com.enigoo.terminal;
 
+import android.util.Log;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -28,7 +30,6 @@ public class Payment {
       }
     }
 
-
     return string;
   }
 
@@ -52,7 +53,7 @@ public class Payment {
   public byte[] createPayment(double price) throws IOException {
 
     String[] messages = {"T00", "B" + String.format("%.2f", price).replace(".", "") + "", "E203", "D1"};
-    byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0001" + this.calculateLength(messages) + "A5A5", messages);
+    byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0000" + this.calculateLength(messages) + "A5A5", messages);
     return bytes;
   }
 

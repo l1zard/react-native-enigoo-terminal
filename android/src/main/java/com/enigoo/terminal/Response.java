@@ -35,6 +35,7 @@ public class Response {
     private boolean isDone = false;
 
     public Response(ArrayList<String> block) {
+      if(block.size() > 0)
         this.messageType = (String.valueOf(block.get(0).charAt(0)) + String.valueOf(block.get(0).charAt(1)));
         if (this.messageType.equals(TERMINAL_RESPONSE)) {
             this.setTransactionType(block.get(1));
