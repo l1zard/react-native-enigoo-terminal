@@ -28,8 +28,8 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-	type: "CREATE_PAYMENT"
-	status: "SUCCESS"
+  type: "CREATE_PAYMENT"
+  status: "SUCCESS"
 }
 ```
 
@@ -37,10 +37,28 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-	type: "PURCHASE"
+  type: "PURCHASE"
+  status: "SUCCESS"
+}
+```
+
+### Připojení
+
+Po každém zavolání funkce přijde emit connection
+
+```json
+{
+	type: "CONNECTION"
 	status: "SUCCESS"
 }
 ```
+
+- Stav
+
+  `SUCCESS`  - Všechno proběhlo v pořádku
+
+  `FAILED`  - Připojení se nezdařilo, špatně nastavený terminál nebo připojení na něj
+
 
 ### Seznam všech typů a stavů
 
