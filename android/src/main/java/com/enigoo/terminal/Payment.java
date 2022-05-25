@@ -52,14 +52,14 @@ public class Payment {
 
   public byte[] createPayment(double price) throws IOException {
 
-    String[] messages = {"T00", "B" + String.format("%.2f", price).replace(".", "") + "", "E203", "D1"};
+    String[] messages = {"T00", "B" + String.format("%.2f", price).replace(".", "").replace(",", "") + "", "E203", "D1"};
     byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0000" + this.calculateLength(messages) + "A5A5", messages);
     return bytes;
   }
 
   public byte[] createRefund(double price) throws IOException {
 
-    String[] messages = {"T04", "B" + String.format("%.2f", price).replace(".", "") + "", "E203", "D1"};
+    String[] messages = {"T04", "B" + String.format("%.2f", price).replace(".", "").replace(",","¬") + "", "E203", "D1"};
     byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0000" + this.calculateLength(messages) + "A5A5", messages);
     return bytes;
   }
