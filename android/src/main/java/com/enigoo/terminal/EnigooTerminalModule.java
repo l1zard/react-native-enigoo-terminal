@@ -77,8 +77,21 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
     } else {
       emit(new JSONObject().put("type", "CONNECTION").put("status", "SUCCESS").toString());
       new SendMessage(s, new FPPayment().createOrderId(orderId)).execute();
-      new SendMessage(s, new FPPayment().createOrder()).execute();
+      new SendMessage(s, new FPPayment().createOrder(price)).execute();
       emit(new JSONObject().put("type", "CREATE_PAYMENT").put("status", "SUCCESS").toString());
+    }
+  }
+
+  @ReactMethod
+  public void createFiscalProRefund(String price, String orderId, String ipAddress, int port) throws IOException, JSONException, ExecutionException, InterruptedException {
+    Socket s = new FPConnection(ipAddress, port, "RETURN").execute().get();
+    if (s == null) {
+      emit(new JSONObject().put("type", "CONNECTION").put("status", "FAILED").toString());
+    } else {
+      emit(new JSONObject().put("type", "CONNECTION").put("status", "SUCCESS").toString());
+      new SendMessage(s, new FPPayment().createOrderId(orderId)).execute();
+      new SendMessage(s, new FPPayment().refund(price)).execute();
+      emit(new JSONObject().put("type", "CREATE_REFUND").put("status", "SUCCESS").toString());
     }
   }
 

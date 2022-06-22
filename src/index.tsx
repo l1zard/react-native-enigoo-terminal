@@ -41,5 +41,14 @@ export function createFiscalProPayment(
   ipAddress: string,
   port: number
 ): void {
-  return EnigooTerminal.createCsobRefund(price, orderId, ipAddress, port);
+  return EnigooTerminal.createFiscalProPayment(price, orderId, ipAddress, port);
+}
+
+export function createFiscalProRefund(
+  price: string,
+  orderId: string,
+  ipAddress: string,
+  port: number
+): void {
+  return EnigooTerminal.createFiscalProRefund(price, orderId, ipAddress, port);
 }

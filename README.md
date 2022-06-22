@@ -1,4 +1,6 @@
-# ČSOB - Terminál dokumentace
+# Terminál dokumentace
+
+# ČSOB
 
 ## Vytvoření platby
 
@@ -18,6 +20,28 @@ createCsobRefund(String price, String ipAddress, int port, String deviceId)
 
 Vytvoří refundaci na platební terminál
 
+# FiskalPro
+
+## Vytvoření platby
+
+```java
+createFiscalProPayment(String price, String orderId, String ipAddress, int port)
+```
+
+Vytvoří platbu na platební terminál. Cena musí být string ve tvaru např.:  “100” nebo “100.0”.
+
+Po vytvoření platby terminál čeká na zaplacení po dobu 1. minuty poté platbu vystornuje.
+
+### Refundace platby
+
+```java
+createFiscalProRefund(String price, String orderId, String ipAddress, int port)
+```
+
+Vytvoří refundaci na platební terminál pouze na původní objednávku!
+
+# Obecné stavy
+
 ## Terminal Listener
 
 ```jsx
@@ -28,8 +52,8 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-  type: "CREATE_PAYMENT"
-  status: "SUCCESS"
+	type: "CREATE_PAYMENT"
+	status: "SUCCESS"
 }
 ```
 
@@ -37,8 +61,8 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-  type: "PURCHASE"
-  status: "SUCCESS"
+	type: "PURCHASE"
+	status: "SUCCESS"
 }
 ```
 
