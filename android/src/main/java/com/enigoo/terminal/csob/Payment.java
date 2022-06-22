@@ -1,4 +1,4 @@
-package com.enigoo.terminal;
+package com.enigoo.terminal.csob;
 
 import android.util.Log;
 

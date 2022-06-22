@@ -1,6 +1,8 @@
-package com.enigoo.terminal;
+package com.enigoo.terminal.csob;
 
 import android.os.AsyncTask;
+
+import com.enigoo.terminal.EnigooTerminalModule;
 
 import org.json.JSONException;
 
