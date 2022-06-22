@@ -34,3 +34,12 @@ export function createCsobRefund(
 ): void {
   return EnigooTerminal.createCsobRefund(price, ipAddress, port, deviceId);
 }
+
+export function createFiscalProPayment(
+  price: string,
+  orderId: string,
+  ipAddress: string,
+  port: number
+): void {
+  return EnigooTerminal.createCsobRefund(price, orderId, ipAddress, port);
+}
