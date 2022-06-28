@@ -1,12 +1,25 @@
 package com.enigoo.terminal;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
+
 
 import com.enigoo.terminal.csob.Connection;
 import com.enigoo.terminal.csob.Payment;
 import com.enigoo.terminal.csob.SendMessage;
 import com.enigoo.terminal.fiskalpro.FPConnection;
 import com.enigoo.terminal.fiskalpro.FPPayment;
+import com.enigoo.terminal.fiskalsk.UsbService;
+import com.facebook.react.bridge.ActivityEventListener;
+import com.facebook.react.bridge.BaseActivityEventListener;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -18,6 +31,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 @ReactModule(name = EnigooTerminalModule.NAME)
@@ -29,6 +43,7 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
     super(reactContext);
     reactApplicationContext = reactContext;
   }
+
 
   @Override
   @NonNull
@@ -93,6 +108,45 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
       new SendMessage(s, new FPPayment().refund(price)).execute();
       emit(new JSONObject().put("type", "CREATE_REFUND").put("status", "SUCCESS").toString());
     }
+  }
+
+
+  @ReactMethod
+  public void connectUsb() {
+    startService(UsbService.class, usbConnection, null);
+  }
+
+
+  public static UsbService usbService;
+
+  protected final ServiceConnection usbConnection = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName arg0, IBinder arg1) {
+      usbService = ((UsbService.UsbBinder) arg1).getService();
+
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      usbService = null;
+    }
+  };
+
+  protected void startService(Class<?> service, ServiceConnection serviceConnection, Bundle extras) {
+    if (!UsbService.SERVICE_CONNECTED) {
+      Intent startService = new Intent(reactApplicationContext.getBaseContext(), service);
+      if (extras != null && !extras.isEmpty()) {
+        Set<String> keys = extras.keySet();
+        for (String key : keys) {
+          String extra = extras.getString(key);
+          startService.putExtra(key, extra);
+        }
+      }
+      reactApplicationContext.getBaseContext().startService(startService);
+      Toast.makeText(reactApplicationContext, "Service started", Toast.LENGTH_SHORT).show();
+    }
+    Intent bindingIntent = new Intent(reactApplicationContext.getBaseContext(), service);
+    reactApplicationContext.getBaseContext().bindService(bindingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
   }
 
 }
