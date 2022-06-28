@@ -1,4 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.enigoo.terminal">
+  package="com.enigoo.terminal">
+
+  <uses-feature
+    android:name="android.hardware.usb.host"
+    android:required="true" />
+
+  <application>
+    <service
+      android:name=".fiskalsk.UsbService"
+      android:enabled="true">
+    </service>
+  </application>
 
 </manifest>

@@ -51,9 +51,11 @@ repositories {
     google()
     mavenCentral()
     jcenter()
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
+    implementation 'com.github.felHR85:UsbSerial:6.1.0'
 }
