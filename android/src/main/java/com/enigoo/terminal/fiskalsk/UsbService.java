@@ -124,7 +124,7 @@ public class UsbService extends Service {
     public void onCreate() {
         this.context = this;
         serialPortConnected = false;
-        com.example.fiskalsk.UsbService.SERVICE_CONNECTED = true;
+        UsbService.SERVICE_CONNECTED = true;
         setFilter();
         usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         findSerialPortDevice();
@@ -149,7 +149,7 @@ public class UsbService extends Service {
         super.onDestroy();
         serialPort.close();
         unregisterReceiver(usbReceiver);
-        com.example.fiskalsk.UsbService.SERVICE_CONNECTED = false;
+        UsbService.SERVICE_CONNECTED = false;
     }
 
     /*
@@ -225,8 +225,8 @@ public class UsbService extends Service {
     }
 
     public class UsbBinder extends Binder {
-        public com.example.fiskalsk.UsbService getService() {
-            return com.example.fiskalsk.UsbService.this;
+        public UsbService getService() {
+            return UsbService.this;
         }
     }
 
