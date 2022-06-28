@@ -17,6 +17,7 @@ import com.enigoo.terminal.csob.Payment;
 import com.enigoo.terminal.csob.SendMessage;
 import com.enigoo.terminal.fiskalpro.FPConnection;
 import com.enigoo.terminal.fiskalpro.FPPayment;
+import com.enigoo.terminal.fiskalsk.FiskalPro;
 import com.enigoo.terminal.fiskalsk.UsbService;
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.BaseActivityEventListener;
@@ -114,6 +115,11 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void connectUsb() {
     startService(UsbService.class, usbConnection, null);
+  }
+
+  @ReactMethod
+  public void testFiskalPayment() {
+    FiskalPro.print(usbService);
   }
 
 

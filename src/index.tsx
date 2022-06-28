@@ -56,3 +56,7 @@ export function createFiscalProRefund(
 export function connectUsb(): void {
   return EnigooTerminal.connectUsb();
 }
+
+export function testFiskalPayment(): void {
+  return EnigooTerminal.testFiskalPayment();
+}
