@@ -53,10 +53,10 @@ export function createFiscalProRefund(
   return EnigooTerminal.createFiscalProRefund(price, orderId, ipAddress, port);
 }
 
-export function connectUsb(): void {
-  return EnigooTerminal.connectUsb();
+export function setUsbServiceFiskalProSk(): void {
+  return EnigooTerminal.setUsbServiceFiskalProSk();
 }
 
-export function testFiskalPayment(): void {
-  return EnigooTerminal.testFiskalPayment();
+export function createFiskalProSkTerminalRecord(data: string): void {
+  return EnigooTerminal.createFiskalProSkTerminalRecord(data);
 }

@@ -1,9 +1,11 @@
 package com.enigoo.terminal;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -32,6 +34,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -113,13 +116,13 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
 
 
   @ReactMethod
-  public void connectUsb() {
+  public void setUsbServiceFiskalProSk() {
     startService(UsbService.class, usbConnection, null);
   }
 
   @ReactMethod
-  public void testFiskalPayment() {
-    FiskalPro.print(usbService);
+  public void createFiskalProSkTerminalRecord(String data) throws JSONException {
+    FiskalPro.print(usbService, data);
   }
 
 
@@ -129,7 +132,6 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
     @Override
     public void onServiceConnected(ComponentName arg0, IBinder arg1) {
       usbService = ((UsbService.UsbBinder) arg1).getService();
-
     }
 
     @Override
@@ -149,7 +151,6 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
         }
       }
       reactApplicationContext.getBaseContext().startService(startService);
-      Toast.makeText(reactApplicationContext, "Service started", Toast.LENGTH_SHORT).show();
     }
     Intent bindingIntent = new Intent(reactApplicationContext.getBaseContext(), service);
     reactApplicationContext.getBaseContext().bindService(bindingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
