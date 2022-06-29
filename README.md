@@ -40,6 +40,51 @@ createFiscalProRefund(String price, String orderId, String ipAddress, int port)
 
 Vytvoří refundaci na platební terminál pouze na původní objednávku!
 
+# FiskalPro - SK
+
+```java
+createFiskalProSkTerminalRecord(String data)
+```
+
+Vytvoří platbu na terminal Fiskal Pro - SK pro evidenci tržeb.
+
+parametr data je JSON string kde:
+
+```json
+{
+  "paymentType": 1,
+  "items": [
+    {
+      "name": "Vstupenka",
+      "count": 2,
+      "singlePrice": 10,
+      "vat": 1
+    }
+  ]
+}
+```
+
+**paymentType**
+
+- 1 = Hotově
+- 2 = Kartou
+
+**vat**
+
+- 1 = 20%
+- 2= 10%
+- 3 = 15%
+- 4 =  default (asi 0)
+
+**Po dokončení platby přijde status**
+
+```json
+{
+	type: "FISKAL_PAYMENT"
+	status: "SUCCESS"
+}
+```
+
 # Obecné stavy
 
 ## Terminal Listener
