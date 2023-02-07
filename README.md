@@ -20,6 +20,23 @@ createCsobRefund(String price, String ipAddress, int port, String deviceId)
 
 Vytvoří refundaci na platební terminál
 
+### Uzávěrka terminálu
+```java
+createCsobCloseTotals(String ipAddress, int port, String deviceId)
+```
+### Test spojení
+```java
+createCsobHandshake(String ipAddress, int port, String deviceId)
+```
+
+### Aktualizace
+```java
+createCsobTmsBCall(String ipAddress, int port, String deviceId)
+```
+
+```java
+createCsobTmsNCall(String ipAddress, int port, String deviceId)
+```
 # FiskalPro
 
 ## Vytvoření platby
@@ -97,7 +114,7 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-	type: "CREATE_PAYMENT"
+	type: "CREATE_PAYMENT",
 	status: "SUCCESS"
 }
 ```
@@ -106,10 +123,29 @@ DeviceEventEmitter.addListener("TERMINAL_EVENTS", (data) => {})
 
 ```json
 {
-	type: "PURCHASE"
-	status: "SUCCESS"
+  type: "PURCHASE",
+  status: "SUCCESS",
+  merchantRecipe: [
+    "row1",
+    "row2",
+    "row3",
+    ...
+  ],
+  customerRecipe: [
+    "row1",
+    "row2",
+    "row3",
+    ...
+  ]
 }
 ```
+
+Po dokončení transakce vždy přijde ve výsledku **merchantRecipe** a **customerRecipe**, v případě,
+že terminál vyžaduje po pokladně vytištění lístečku, tak v těchto polích budou jednotlivé řádky účtenek.
+V případě přázdných polí se po pokladně nevyžaduje tisk lístečků.
+
+Může taktéž nastat situace, že je naplněno pouze pole merchantRecipe - nastává například při uzávěrce
+či testu spojení, kdy je výsledek operace určen pouze pro obchodníka.
 
 ### Připojení
 
@@ -142,6 +178,12 @@ Po každém zavolání funkce přijde emit connection
   `RETURN`  - Vrácení prostředků na kartu
 
   `REVERSAL`  - slouží ke zrušení poslední podpisové transakce provedené na platebním terminálu, v případě nesouhlasu podpisu. Může být proveden pouze bezprostředně po platební transakci a mezi platební transakcí a jejím reversalem nesmí být provedena uzávěrka.
+
+  `CLOSE_TOTALS`  - Uzávěrka platebního terminálu.
+
+  `HANDSHAKE`  - test spojení.
+
+  `TMS_CALL`  - aktualizace terminálu.
 
 - Stav
 

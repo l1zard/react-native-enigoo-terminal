@@ -2,28 +2,34 @@ package com.enigoo.terminal.csob;
 
 import android.os.AsyncTask;
 
+
 import com.enigoo.terminal.EnigooTerminalModule;
 
 import org.json.JSONException;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Connection extends AsyncTask<Void, Void, Socket> {
 
     private final String mServerAddress;
     private final int mServerPort;
 
-    public Connection(String serverAddress, int serverPort) {
+    public Payment payment;
+    public Connection(String serverAddress, int serverPort, Payment payment) {
         mServerAddress = serverAddress;
         mServerPort = serverPort;
+        this.payment = payment;
     }
 
     @Override
     protected Socket doInBackground(Void... voids) {
         try {
             Socket socket = new Socket(mServerAddress, mServerPort);
-            new Thread(new GetThread(socket)).start();
+            new Thread(new GetThread(socket,payment)).start();
 
             return socket;
 
@@ -37,9 +43,11 @@ public class Connection extends AsyncTask<Void, Void, Socket> {
     static class GetThread implements Runnable {
 
         Socket socket;
+        Payment payment;
 
-        public GetThread(Socket socket) {
+        public GetThread(Socket socket,Payment payment) {
             this.socket = socket;
+            this.payment = payment;
         }
 
         final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -74,8 +82,49 @@ public class Connection extends AsyncTask<Void, Void, Socket> {
 
         @Override
         public void run() {
+            try {
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                Response response = waitForResponse();
+                if(response.isWantTicket()){
+                    List<String> merchantRecipes = new ArrayList<>();
+                    byte [] req = payment.createTicketRequest("tM");
+                    Response merchResponse;
+                    boolean next = true;
+                    while(next){
+                        out.write(req);
+                        out.flush();
+                        merchResponse = waitForResponse();
+                        merchantRecipes.addAll(merchResponse.getRecipes());
+                        next = merchResponse.wantNext();
+                        req = payment.createTicketRequest("t-");
+                    }
+                    response.setMerchantRecipe(merchantRecipes);
 
+                    List<String> customerRecipes = new ArrayList<>();
+                    req = payment.createTicketRequest("tC");
+                    Response custResponse;
+                    next = true;
+                    while(next){
+                        out.write(req);
+                        out.flush();
+                        custResponse = waitForResponse();
+                        customerRecipes.addAll(custResponse.getRecipes());
+                        next = custResponse.wantNext();
+                        req = payment.createTicketRequest("t-");
+                    }
+                    response.setCustomerRecipe(customerRecipes);
+                }
 
+                socket.close();
+                EnigooTerminalModule.emit(response.toJsonString());
+
+            } catch (IOException | JSONException e ) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        private Response waitForResponse(){
             boolean isDone = false;
             Response res = null;
             try {
@@ -95,18 +144,10 @@ public class Connection extends AsyncTask<Void, Void, Socket> {
                     isDone = response.isDone();
 
                 }
-
-                if (res != null) {
-                    EnigooTerminalModule.emit(res.toJsonString());
-                }
-
-                socket.close();
-
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
+                return res;
+            } catch (IOException e) {
+                return res;
             }
-
-
         }
     }
 }
