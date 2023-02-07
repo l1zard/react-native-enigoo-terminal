@@ -35,6 +35,38 @@ export function createCsobRefund(
   return EnigooTerminal.createCsobRefund(price, ipAddress, port, deviceId);
 }
 
+export function createCsobCloseTotals(
+  ipAddress: string,
+  port: number,
+  deviceId: string
+): void{
+  return EnigooTerminal.createCsobCloseTotals(ipAddress, port, deviceId);
+}
+
+export function createCsobHandshake(
+  ipAddress: string,
+  port: number,
+  deviceId: string
+): void{
+  return EnigooTerminal.createCsobHandshake(ipAddress, port, deviceId);
+}
+
+export function createCsobTmsBCall(
+  ipAddress: string,
+  port: number,
+  deviceId: string
+): void{
+  return EnigooTerminal.createCsobTmsBCall(ipAddress, port, deviceId);
+}
+
+export function createCsobTmsNCall(
+  ipAddress: string,
+  port: number,
+  deviceId: string
+): void{
+  return EnigooTerminal.createCsobTmsNCall(ipAddress, port, deviceId);
+}
+
 export function createFiscalProPayment(
   price: string,
   orderId: string,
