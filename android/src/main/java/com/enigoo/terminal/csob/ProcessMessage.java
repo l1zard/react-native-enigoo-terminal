@@ -90,8 +90,7 @@ public class ProcessMessage implements Runnable {
         } catch (IOException e) {
             emitStatus("CONNECTION", "FAILED");
         }catch (Exception e){
-            System.out.println(e.getMessage());
-            emitStatus("UNKNOWN",e.getMessage());
+            emitStatus("UNKNOWN","ERROR");
         }
 
     }
