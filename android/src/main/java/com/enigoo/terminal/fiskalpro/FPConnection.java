@@ -3,6 +3,8 @@ package com.enigoo.terminal.fiskalpro;
 import android.os.AsyncTask;
 
 import com.enigoo.terminal.EnigooTerminalModule;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 
 import org.json.JSONException;
 
@@ -75,12 +77,14 @@ public class FPConnection extends AsyncTask<Void, Void, Socket> {
         }
 
         if (res != null) {
-          EnigooTerminalModule.emit(res.toJsonObject().put("type", this.type).toString());
+          WritableMap params = Arguments.createMap();
+          params.putString("type", "this.type");
+          EnigooTerminalModule.emit(params);
         }
 
         socket.close();
 
-      } catch (IOException | JSONException e) {
+      } catch (IOException e) {
         e.printStackTrace();
       }
     }

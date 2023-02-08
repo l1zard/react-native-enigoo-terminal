@@ -1,6 +1,8 @@
 package com.enigoo.terminal.fiskalsk;
 
 import com.enigoo.terminal.EnigooTerminalModule;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -28,8 +30,10 @@ public class FiskalPro {
         for (String com : generateDataSentence(data)) {
           usbService.write(createCommand(com));
         }
-
-        EnigooTerminalModule.emit(new JSONObject().put("type", "FISKAL_PAYMENT").put("status", "SUCCESS").toString());
+        WritableMap params = Arguments.createMap();
+        params.putString("type", "FISKAL_PAYMENT");
+        params.putString("status", "SUCCESS");
+        EnigooTerminalModule.emit(params);
       } catch (IOException | JSONException e) {
         e.printStackTrace();
       }

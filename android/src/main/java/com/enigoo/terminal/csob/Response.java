@@ -2,8 +2,9 @@ package com.enigoo.terminal.csob;
 
 import android.util.Log;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ public class Response {
     private static final String CARD_YOUNG = "R-11";
     private static final String CARD_NO_ENOUGH_MONEY = "R-12";
     private static final String TIMEOUT = "R-18";
+
+    private static final String OPERATION_DISCARD = "R-21";
     private static final String CARD_BLOCKED = "R-29";
     private ArrayList<String> block;
     private String messageType;
@@ -66,6 +69,14 @@ public class Response {
         }
     }
 
+    public Response(String transactionType, String responseType) {
+        this.transactionType = transactionType;
+        this.responseType = responseType;
+        this.isDone = false;
+        this.wantTicket = false;
+        this.messageType = null;
+    }
+
     public List<String> getRecipes(){
         List<String> recipes = new ArrayList<>();
         for (String bl: block) {
@@ -77,16 +88,8 @@ public class Response {
     }
 
     private void checkFlag(String hexFlag){
-        int flag = 0;
-        for(int i = 0; i<hexFlag.length(); i++){
-            flag+=Integer.parseInt(hexFlag.substring(i,i+1),16);
-        }
-        StringBuilder flagStr = new StringBuilder(Integer.toBinaryString(flag));
-        while(flagStr.length()<16){
-            flagStr.insert(0, "0");
-        }
-        this.setFlag(flagStr.toString());
-        if(this.getMessageType().equals("B2") && flagStr.charAt(this.flag.length()-2)=='1'){
+        this.setFlag(Integer.toBinaryString(Integer.parseInt(hexFlag,16)));
+        if(this.getMessageType().equals("B2") && flag.charAt(this.flag.length()-2)=='1'){
             this.setWantTicket(true);
         }
     }
@@ -160,67 +163,81 @@ public class Response {
         this.customerRecipe = customerRecipe;
     }
 
-    public String toJsonString() throws JSONException {
-        JSONObject json = new JSONObject();
-
+    public WritableMap toJsonString() {
+        WritableMap params = Arguments.createMap();
         switch (this.transactionType) {
             case NORMAL_PURCHASE:
-                json.put("type", "PURCHASE");
+                params.putString("type", "PURCHASE");
                 break;
             case RETURN:
-                json.put("type", "RETURN");
+                params.putString("type", "RETURN");
                 break;
             case PURCHASE_WITH_CASHBACK:
-                json.put("type", "PURCHASE_WITH_CASHBACK");
+                params.putString("type", "PURCHASE_WITH_CASHBACK");
                 break;
             case REVERSAL:
-                json.put("type", "REVERSAL");
+                params.putString("type", "REVERSAL");
                 break;
             case CLOSE_TOTALS:
-                json.put("type","CLOSE_TOTALS");
+                params.putString("type","CLOSE_TOTALS");
                 break;
             case HANDSHAKE:
-                json.put("type","HANDSHAKE");
+                params.putString("type","HANDSHAKE");
                 break;
             case TMS_CALL:
-                json.put("type","TMS_CALL");
+                params.putString("type","TMS_CALL");
                 break;
-        }
-
-        switch (this.responseType) {
-            case SUCCESS:
-                json.put("status", "SUCCESS");
-                break;
-            case USER_CANCEL:
-                json.put("status", "CANCEL");
-                break;
-            case CARD_ERROR:
-                json.put("status", "CARD_ERROR");
-                break;
-            case CARD_EXPIRED:
-                json.put("status", "CARD_EXPIRED");
-                break;
-            case CARD_YOUNG:
-                json.put("status", "CARD_YOUNG");
-                break;
-            case CARD_NO_ENOUGH_MONEY:
-                json.put("status", "CARD_NO_ENOUGH_MONEY");
-                break;
-            case TIMEOUT:
-                json.put("status", "TIMEOUT");
-                break;
-            case CARD_BLOCKED:
-                json.put("status", "CARD_BLOCKED");
+            case "0":
+                params.putString("type","CONNECTION");
                 break;
             default:
-                json.put("status", "DEFAULT_ERROR");
+                params.putString("type","UNKNOWN");
                 break;
         }
+        switch (this.responseType) {
+            case SUCCESS:
+                params.putString("status", "SUCCESS");
+                break;
+            case USER_CANCEL:
+                params.putString("status", "CANCEL");
+                break;
+            case CARD_ERROR:
+                params.putString("status", "CARD_ERROR");
+                break;
+            case CARD_EXPIRED:
+                params.putString("status", "CARD_EXPIRED");
+                break;
+            case CARD_YOUNG:
+                params.putString("status", "CARD_YOUNG");
+                break;
+            case CARD_NO_ENOUGH_MONEY:
+                params.putString("status", "CARD_NO_ENOUGH_MONEY");
+                break;
+            case TIMEOUT:
+                params.putString("status", "TIMEOUT");
+                break;
+            case CARD_BLOCKED:
+                params.putString("status", "CARD_BLOCKED");
+                break;
+            case "0":
+                params.putString("status","LOST");
+                break;
+            default:
+                params.putString("status", "DEFAULT_ERROR");
+                break;
+        }
+        WritableArray arrayMerch = Arguments.createArray();
+        for (String row :getMerchantRecipe()) {
+            arrayMerch.pushString(row);
+        }
+        params.putArray("merchantRecipe",arrayMerch);
+        WritableArray arrayCust = Arguments.createArray();
+        for (String row :getCustomerRecipe()) {
+            arrayCust.pushString(row);
+        }
+        params.putArray("customerRecipe",arrayCust);
 
-        json.put("merchantRecipe",getMerchantRecipe());
-        json.put("customerRecipe",getCustomerRecipe());
 
-
-        return json.toString();
+        return params;
     }
 }

@@ -51,14 +51,14 @@ public class Payment {
     public byte[] createPayment(double price) throws IOException {
 
         String[] messages = {"T00", "B" + String.format("%.2f", price).replace(".", "").replace(",", "") + "", "E203", "D1"};
-        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0000" + this.calculateLength(messages) + "A5A5", messages);
+        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "A000" + this.calculateLength(messages) + "A5A5", messages);
         return bytes;
     }
 
     public byte[] createRefund(double price) throws IOException {
 
         String[] messages = {"T04", "B" + String.format("%.2f", price).replace(".", "").replace(",","") + "", "E203", "D1"};
-        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "0000" + this.calculateLength(messages) + "A5A5", messages);
+        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "A000" + this.calculateLength(messages) + "A5A5", messages);
         return bytes;
     }
 
@@ -79,26 +79,30 @@ public class Payment {
 
     public byte[] createCloseTotals() throws IOException {
         String[] messages = {"T60"};
-        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "00000004"  + "A5A5", messages);
+        byte[] bytes = this.prevodnik("B101" + this.deviceId + this.getDate() + "A0000004"  + "A5A5", messages);
         return bytes;
     }
 
     public byte[] createBTmsCall() throws IOException{
         String[] messages = {"T90"};
-        byte[] bytes = this.prevodnik("B101"+this.deviceId+this.getDate()+"00000004"+"A5A5",messages);
+        byte[] bytes = this.prevodnik("B101"+this.deviceId+this.getDate()+"A0000004"+"A5A5",messages);
         return bytes;
     }
 
     public byte[] createNTmsCall() throws IOException{
         String[] messages = {"T90"};
-        byte[] bytes = this.prevodnik("N101"+this.deviceId+this.getDate()+"00000004"+"A5A5",messages);
+        byte[] bytes = this.prevodnik("N101"+this.deviceId+this.getDate()+"A0000004"+"A5A5",messages);
         return bytes;
     }
 
     public byte[] createHandshake() throws IOException{
         String[] messages = {"T95"};
-        byte[] bytes =  this.prevodnik("B101"+this.deviceId+this.getDate()+"00000004"+"A5A5",messages);
+        byte[] bytes =  this.prevodnik("B101"+this.deviceId+this.getDate()+"A0000004"+"A5A5",messages);
         return bytes;
+    }
+
+    public byte[] createConfirmRequest() throws IOException {
+        return this.prevodnik("B001"+this.deviceId+this.getDate()+"00000000"+"A5A5",new String[0]);
     }
 
 
