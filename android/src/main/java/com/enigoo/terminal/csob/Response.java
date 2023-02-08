@@ -49,14 +49,17 @@ public class Response {
 
     public Response(ArrayList<String> block) {
         this.block = block;
-        if(block.size() > 0)
+        if (block.size() > 0) {
             this.messageType = (String.valueOf(block.get(0).charAt(0)) + String.valueOf(block.get(0).charAt(1)));
-        switch (this.messageType){
-            case "B2" :
+        } else {
+            this.messageType = "";
+        }
+        switch (this.messageType) {
+            case "B2":
                 this.setDone(true);
                 this.setResponseType(block.get(2));
                 this.setTransactionType(block.get(1));
-                checkFlag(block.get(0).substring(24,28));
+                checkFlag(block.get(0).substring(24, 28));
                 break;
             case "B4":
                 this.setDone(true);
@@ -77,25 +80,25 @@ public class Response {
         this.messageType = null;
     }
 
-    public List<String> getRecipes(){
+    public List<String> getRecipes() {
         List<String> recipes = new ArrayList<>();
-        for (String bl: block) {
-            if(bl.startsWith("T0") || bl.startsWith("T1") ||bl.startsWith("T2") || bl.startsWith("T3")){
+        for (String bl : block) {
+            if (bl.startsWith("T0") || bl.startsWith("T1") || bl.startsWith("T2") || bl.startsWith("T3")) {
                 recipes.add(bl.substring(2).replaceAll("^\\s+", ""));
             }
         }
         return recipes;
     }
 
-    private void checkFlag(String hexFlag){
-        this.setFlag(Integer.toBinaryString(Integer.parseInt(hexFlag,16)));
-        if(this.getMessageType().equals("B2") && flag.charAt(this.flag.length()-2)=='1'){
+    private void checkFlag(String hexFlag) {
+        this.setFlag(Integer.toBinaryString(Integer.parseInt(hexFlag, 16)));
+        if (this.getMessageType().equals("B2") && flag.charAt(this.flag.length() - 2) == '1') {
             this.setWantTicket(true);
         }
     }
 
-    public boolean wantNext(){
-        return block.get(block.size()-1).equals("t1");
+    public boolean wantNext() {
+        return block.get(block.size() - 1).equals("t1");
     }
 
     public boolean isWantTicket() {
@@ -163,7 +166,7 @@ public class Response {
         this.customerRecipe = customerRecipe;
     }
 
-    public WritableMap toJsonString() {
+    public WritableMap toReactObject() {
         WritableMap params = Arguments.createMap();
         switch (this.transactionType) {
             case NORMAL_PURCHASE:
@@ -179,19 +182,19 @@ public class Response {
                 params.putString("type", "REVERSAL");
                 break;
             case CLOSE_TOTALS:
-                params.putString("type","CLOSE_TOTALS");
+                params.putString("type", "CLOSE_TOTALS");
                 break;
             case HANDSHAKE:
-                params.putString("type","HANDSHAKE");
+                params.putString("type", "HANDSHAKE");
                 break;
             case TMS_CALL:
-                params.putString("type","TMS_CALL");
+                params.putString("type", "TMS_CALL");
                 break;
             case "0":
-                params.putString("type","CONNECTION");
+                params.putString("type", "CONNECTION");
                 break;
             default:
-                params.putString("type","UNKNOWN");
+                params.putString("type", "UNKNOWN");
                 break;
         }
         switch (this.responseType) {
@@ -220,22 +223,22 @@ public class Response {
                 params.putString("status", "CARD_BLOCKED");
                 break;
             case "0":
-                params.putString("status","LOST");
+                params.putString("status", "LOST");
                 break;
             default:
                 params.putString("status", "DEFAULT_ERROR");
                 break;
         }
         WritableArray arrayMerch = Arguments.createArray();
-        for (String row :getMerchantRecipe()) {
+        for (String row : getMerchantRecipe()) {
             arrayMerch.pushString(row);
         }
-        params.putArray("merchantRecipe",arrayMerch);
+        params.putArray("merchantRecipe", arrayMerch);
         WritableArray arrayCust = Arguments.createArray();
-        for (String row :getCustomerRecipe()) {
+        for (String row : getCustomerRecipe()) {
             arrayCust.pushString(row);
         }
-        params.putArray("customerRecipe",arrayCust);
+        params.putArray("customerRecipe", arrayCust);
 
 
         return params;

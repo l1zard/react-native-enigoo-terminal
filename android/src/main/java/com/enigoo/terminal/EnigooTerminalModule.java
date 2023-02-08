@@ -61,37 +61,37 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void createCsobPayment(String price, String ipAddress, int port, String deviceId)  throws IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createPayment(Double.parseDouble(price))).execute();
+    new Connection(ipAddress,port,pay,pay.createPayment(Double.parseDouble(price)),"PAYMENT").execute();
   }
 
   @ReactMethod
   public void createCsobRefund(String price, String ipAddress, int port, String deviceId) throws IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createRefund(Double.parseDouble(price))).execute();
+    new Connection(ipAddress,port,pay,pay.createRefund(Double.parseDouble(price)),"REFUND").execute();
   }
 
   @ReactMethod
-  public void createCsobCloseTotals(String ipAddress, int port, String deviceId) throws ExecutionException, InterruptedException, JSONException, IOException {
+  public void createCsobCloseTotals(String ipAddress, int port, String deviceId) throws IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createCloseTotals()).execute();
+    new Connection(ipAddress,port,pay,pay.createCloseTotals(),"CLOSE_TOTALS").execute();
   }
 
   @ReactMethod
-  public void createCsobHandshake(String ipAddress, int port, String deviceId) throws ExecutionException, InterruptedException, JSONException, IOException {
+  public void createCsobHandshake(String ipAddress, int port, String deviceId) throws IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createHandshake()).execute();
+    new Connection(ipAddress,port,pay,pay.createHandshake(),"HANDSHAKE").execute();
   }
 
   @ReactMethod
-  public void createCsobTmsBCall(String ipAddress, int port, String deviceId) throws ExecutionException, InterruptedException, JSONException, IOException {
+  public void createCsobTmsBCall(String ipAddress, int port, String deviceId) throws  IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createBTmsCall()).execute();
+    new Connection(ipAddress,port,pay,pay.createBTmsCall(),"TMS_CALL").execute();
   }
 
   @ReactMethod
-  public void createCsobTmsNCall(String ipAddress, int port, String deviceId) throws ExecutionException, InterruptedException, JSONException, IOException {
+  public void createCsobTmsNCall(String ipAddress, int port, String deviceId) throws IOException {
     Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createNTmsCall()).execute();
+    new Connection(ipAddress,port,pay,pay.createNTmsCall(),"TMS_CALL").execute();
   }
 
   @ReactMethod

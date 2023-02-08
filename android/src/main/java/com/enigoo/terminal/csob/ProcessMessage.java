@@ -20,12 +20,14 @@ public class ProcessMessage implements Runnable {
     private final int serverPort;
 
     private final byte[] message;
+    private final String type;
 
-    public ProcessMessage(String mServerAddress, int mServerPort, Payment payment, byte[]message) throws IOException {
+    public ProcessMessage(String mServerAddress, int mServerPort, Payment payment, byte[] message, String type) throws IOException {
         this.serverAddress = mServerAddress;
         this.serverPort = mServerPort;
         this.payment = payment;
         this.message = message;
+        this.type = type;
     }
 
     final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -61,39 +63,45 @@ public class ProcessMessage implements Runnable {
         try {
             //open socket
             this.socket = new Socket(serverAddress, serverPort);
-            emitStatus("CONNECTION","SUCCESS");
+            emitStatus("CONNECTION", "SUCCESS");
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             //send message to terminal
             out.write(message);
-            emitStatus("CREATE_PAYMENT","SUCCESS");
+            emitStatus("CREATE_" + this.type, "SUCCESS");
             //wait for first response timout = 25 s
             Response response = waitForResponse(25000);
-            if(response.isWantTicket()){
-                response.setMerchantRecipe(getRecipes("tM",out));
-                response.setCustomerRecipe(getRecipes("tC",out));
-            }else {
+            if(response == null){
+                throw new SocketTimeoutException();
+            }
+            if (response.isWantTicket()) {
+                response.setMerchantRecipe(getRecipes("tM", out));
+                response.setCustomerRecipe(getRecipes("tC", out));
+            } else {
                 //send confirm request
                 out.write(payment.createConfirmRequest());
             }
 
             socket.close();
             //emit result
-            EnigooTerminalModule.emit(response.toJsonString());
+            EnigooTerminalModule.emit(response.toReactObject());
 
-        } catch (SocketTimeoutException ex){
-            EnigooTerminalModule.emit(new Response("0","0").toJsonString());
-        } catch(IOException e ) {
-            emitStatus("CONNECTION","FAILED");
+        } catch (SocketTimeoutException ex) {
+            EnigooTerminalModule.emit(new Response("0", "0").toReactObject());
+        } catch (IOException e) {
+            emitStatus("CONNECTION", "FAILED");
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            emitStatus("UNKNOWN",e.getMessage());
         }
 
     }
 
     private List<String> getRecipes(String type, DataOutputStream out) throws IOException {
         List<String> recipes = new ArrayList<>();
-        byte [] req = payment.createTicketRequest(type);
+        byte[] req = payment.createTicketRequest(type);
         Response response;
         boolean next = true;
-        while(next){
+        while (next) {
             out.write(req);
             out.flush();
             response = waitForResponse(10000);
@@ -105,38 +113,32 @@ public class ProcessMessage implements Runnable {
         return recipes;
     }
 
-    private Response waitForResponse(int timeout) {
+    private Response waitForResponse(int timeout) throws IOException {
         boolean isDone = false;
         Response res = null;
-        try {
-            socket.setSoTimeout(timeout);
-            while (!isDone) {
-                byte[] data = new byte[1024];
-                int count = socket.getInputStream().read(data);
+        socket.setSoTimeout(timeout);
+        while (!isDone) {
+            byte[] data = new byte[1024];
+            int count = socket.getInputStream().read(data);
 
-                Message message = new Message(bytesToMessage(data));
-                Response response = message.process();
+            Message message = new Message(bytesToMessage(data));
+            Response response = message.process();
 
 
-                if (response.isDone()) {
-                    res = response;
-                }
-                isDone = response.isDone();
-
+            if (response.isDone()) {
+                res = response;
             }
-            return res;
-        } catch (SocketTimeoutException ex) {
-            res = new Response("0", "0");
-            return res;
-        } catch (IOException e) {
-            return res;
+            isDone = response.isDone();
+
         }
+        return res;
+
     }
 
-    private void emitStatus(String type, String status){
+    private void emitStatus(String type, String status) {
         WritableMap params = Arguments.createMap();
-        params.putString("type",type);
-        params.putString("status",status);
+        params.putString("type", type);
+        params.putString("status", status);
         EnigooTerminalModule.emit(params);
     }
 }
