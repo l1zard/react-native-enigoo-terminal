@@ -47,6 +47,8 @@ public class Response {
 
     private List<String> customerRecipe = new ArrayList<>();
 
+    private List<String> messages;
+
     public Response(ArrayList<String> block) {
         this.block = block;
         if (block.size() > 0) {
@@ -139,6 +141,10 @@ public class Response {
 
     public void setMessageType(String messageType) {
         this.messageType = messageType;
+    }
+
+    public void setMessages(List<String> messages){
+      this.messages = messages;
     }
 
     public void Logger() {
@@ -239,6 +245,13 @@ public class Response {
             arrayCust.pushString(row);
         }
         params.putArray("customerRecipe", arrayCust);
+
+        params.putString("responseCode",responseType);
+        WritableArray arrayMess = Arguments.createArray();
+        for (String message:this.messages){
+          arrayMess.pushString(message);
+        }
+        params.putArray("messages",arrayMess);
 
 
         return params;

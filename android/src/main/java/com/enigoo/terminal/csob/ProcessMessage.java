@@ -22,12 +22,15 @@ public class ProcessMessage implements Runnable {
     private final byte[] message;
     private final String type;
 
+    private List<String> messages;
     public ProcessMessage(String mServerAddress, int mServerPort, Payment payment, byte[] message, String type) throws IOException {
         this.serverAddress = mServerAddress;
         this.serverPort = mServerPort;
         this.payment = payment;
         this.message = message;
         this.type = type;
+        this.messages = new ArrayList<>();
+        messages.add(new String(message));
     }
 
     final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -54,7 +57,7 @@ public class ProcessMessage implements Runnable {
         for (int j = 0; j < newBytes.length; j++) {
             newBytes[j] = bytes[j];
         }
-
+        this.messages.add(new String(newBytes));
         return newBytes;
     }
 
@@ -78,7 +81,9 @@ public class ProcessMessage implements Runnable {
                 response.setCustomerRecipe(getRecipes("tC", out));
             } else {
                 //send confirm request
-                out.write(payment.createConfirmRequest());
+              byte[]req = payment.createConfirmRequest();
+                out.write(req);
+                messages.add(new String(req));
             }
 
             socket.close();
@@ -101,6 +106,7 @@ public class ProcessMessage implements Runnable {
         Response response;
         boolean next = true;
         while (next) {
+            messages.add(new String(req));
             out.write(req);
             out.flush();
             response = waitForResponse(10000);
@@ -126,6 +132,7 @@ public class ProcessMessage implements Runnable {
 
             if (response.isDone()) {
                 res = response;
+                res.setMessages(messages);
             }
             isDone = response.isDone();
 
