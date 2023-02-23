@@ -6,6 +6,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +48,7 @@ public class Response {
 
     private List<String> customerRecipe = new ArrayList<>();
 
-    private List<String> messages;
+    private List<byte[]> messages;
 
     public Response(ArrayList<String> block) {
         this.block = block;
@@ -143,7 +144,7 @@ public class Response {
         this.messageType = messageType;
     }
 
-    public void setMessages(List<String> messages){
+    public void setMessages(List<byte[]> messages){
       this.messages = messages;
     }
 
@@ -247,13 +248,48 @@ public class Response {
         params.putArray("customerRecipe", arrayCust);
 
         params.putString("responseCode",responseType);
-        WritableArray arrayMess = Arguments.createArray();
-        for (String message:this.messages){
-          arrayMess.pushString(message);
+        try {
+          WritableArray arrayMess = parseMessages();
+          params.putArray("messages", arrayMess);
+        }catch (UnsupportedEncodingException ex){
+
         }
-        params.putArray("messages",arrayMess);
 
 
         return params;
+    }
+
+    private WritableArray parseMessages() throws UnsupportedEncodingException {
+      char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+      WritableArray messagesArray = Arguments.createArray();
+      for (byte[] mess: this.messages) {
+        int dateStart = 13;
+        int dateEnd = 25;
+        String date = new String(mess,"ISO-8859-2").substring(dateStart,dateEnd);
+
+        int year = Integer.parseInt(date.substring(0,2));
+        int month = Integer.parseInt(date.substring(2,4));
+        int day = Integer.parseInt(date.substring(4,6));
+        int hour = Integer.parseInt(date.substring(6,8));
+        int minutes = Integer.parseInt(date.substring(8,10));
+        int seconds = Integer.parseInt(date.substring(10,12));
+
+        char[] hexChars = new char[mess.length * 2];
+        for (int j = 0; j < mess.length; j++) {
+          int v = mess[j] & 0xFF;
+          hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+          hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+
+        String hexCharsInString = new String(hexChars);
+        hexCharsInString = hexCharsInString.replaceAll("(.{" + 2 + "})", "$1 ").trim();
+
+        WritableMap obj = Arguments.createMap();
+        obj.putString("date",year+"-"+month+"-"+day+"-"+hour+"-"+minutes+"-"+seconds);
+        obj.putString("data",hexCharsInString);
+        messagesArray.pushMap(obj);
+      }
+
+      return messagesArray;
     }
 }
