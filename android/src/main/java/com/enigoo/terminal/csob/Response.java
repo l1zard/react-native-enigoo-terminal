@@ -1,5 +1,6 @@
 package com.enigoo.terminal.csob;
 
+import android.text.format.DateFormat;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -7,8 +8,10 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class Response {
 
@@ -48,7 +51,7 @@ public class Response {
 
     private List<String> customerRecipe = new ArrayList<>();
 
-    private List<byte[]> messages;
+    private List<ResponseMessage> messages;
 
     public Response(ArrayList<String> block) {
         this.block = block;
@@ -144,7 +147,7 @@ public class Response {
         this.messageType = messageType;
     }
 
-    public void setMessages(List<byte[]> messages){
+    public void setMessages(List<ResponseMessage> messages){
       this.messages = messages;
     }
 
@@ -262,21 +265,10 @@ public class Response {
     private WritableArray parseMessages() throws UnsupportedEncodingException {
       char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
       WritableArray messagesArray = Arguments.createArray();
-      for (byte[] mess: this.messages) {
-        int dateStart = 13;
-        int dateEnd = 25;
-        String date = new String(mess,"ISO-8859-2").substring(dateStart,dateEnd);
-
-        int year = Integer.parseInt(date.substring(0,2));
-        int month = Integer.parseInt(date.substring(2,4));
-        int day = Integer.parseInt(date.substring(4,6));
-        int hour = Integer.parseInt(date.substring(6,8));
-        int minutes = Integer.parseInt(date.substring(8,10));
-        int seconds = Integer.parseInt(date.substring(10,12));
-
-        char[] hexChars = new char[mess.length * 2];
-        for (int j = 0; j < mess.length; j++) {
-          int v = mess[j] & 0xFF;
+      for (ResponseMessage mess: this.messages) {
+        char[] hexChars = new char[mess.getMessage().length * 2];
+        for (int j = 0; j < mess.getMessage().length; j++) {
+          int v = mess.getMessage()[j] & 0xFF;
           hexChars[j * 2] = HEX_ARRAY[v >>> 4];
           hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
@@ -285,7 +277,10 @@ public class Response {
         hexCharsInString = hexCharsInString.replaceAll("(.{" + 2 + "})", "$1 ").trim();
 
         WritableMap obj = Arguments.createMap();
-        obj.putString("date",year+"-"+month+"-"+day+"-"+hour+"-"+minutes+"-"+seconds);
+        String date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).format(mess.getDate());
+
+
+        obj.putString("date",date);
         obj.putString("data",hexCharsInString);
         messagesArray.pushMap(obj);
       }
