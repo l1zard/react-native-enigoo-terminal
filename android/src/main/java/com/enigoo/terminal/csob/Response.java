@@ -1,6 +1,5 @@
 package com.enigoo.terminal.csob;
 
-import android.text.format.DateFormat;
 import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
@@ -84,6 +83,9 @@ public class Response {
         this.isDone = false;
         this.wantTicket = false;
         this.messageType = null;
+        this.messages = new ArrayList<>();
+        this.merchantRecipe = new ArrayList<>();
+        this.customerRecipe = new ArrayList<>();
     }
 
     public List<String> getRecipes() {
