@@ -11,7 +11,10 @@ import androidx.annotation.NonNull;
 
 
 import com.enigoo.terminal.csob.Connection;
+import com.enigoo.terminal.csob.Logger;
 import com.enigoo.terminal.csob.Payment;
+import com.enigoo.terminal.csob.SocketConnection;
+import com.enigoo.terminal.csob.TransactionTypes;
 import com.enigoo.terminal.fiskalpro.FPConnection;
 import com.enigoo.terminal.fiskalpro.FPPayment;
 import com.enigoo.terminal.fiskalpro.FPSendMessage;
@@ -21,6 +24,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -29,6 +33,7 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -59,39 +64,72 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void createCsobPayment(String price, String ipAddress, int port, String deviceId)  throws IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createPayment(Double.parseDouble(price)),"PAYMENT").execute();
+  public void initCsobConnection(String ipAddress, int port, String deviceId) {
+    SocketConnection.init(ipAddress, port, deviceId);
   }
 
   @ReactMethod
-  public void createCsobRefund(String price, String ipAddress, int port, String deviceId) throws IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createRefund(Double.parseDouble(price)),"REFUND").execute();
+  public void createCsobGetAppInfo() throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.GET_APP_INFO, 0, null), "GET_APP_INFO", "GET_INFO").execute();
   }
 
   @ReactMethod
-  public void createCsobCloseTotals(String ipAddress, int port, String deviceId) throws IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createCloseTotals(),"CLOSE_TOTALS").execute();
+  public void createCsobHandshake() throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.HANDSHAKE, 0, null), "HANDSHAKE", "HANDSHAKE").execute();
   }
 
   @ReactMethod
-  public void createCsobHandshake(String ipAddress, int port, String deviceId) throws IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createHandshake(),"HANDSHAKE").execute();
+  public void createCsobPayment(String price, String orderId) throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.NORMAL_PURCHASE, Double.parseDouble(price), orderId), "PAYMENT", orderId).execute();
   }
 
   @ReactMethod
-  public void createCsobTmsBCall(String ipAddress, int port, String deviceId) throws  IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createBTmsCall(),"TMS_CALL").execute();
+  public void createCsobRefund(String price, String orderId) throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.REFUND, Double.parseDouble(price), orderId), "REFUND", orderId).execute();
   }
 
   @ReactMethod
-  public void createCsobTmsNCall(String ipAddress, int port, String deviceId) throws IOException {
-    Payment pay = new Payment(deviceId);
-    new Connection(ipAddress,port,pay,pay.createNTmsCall(),"TMS_CALL").execute();
+  public void createCsobCloseTotals() throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.CLOSE_TOTALS, 0, null), "CLOSE_TOTALS", "CLOSE_TOTALS").execute();
+  }
+
+  @ReactMethod
+  public void createCsobTmsBCall() throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.TMS_CALL, 0, null), "TMS_CALL", "TMS_CALL").execute();
+  }
+
+  @ReactMethod
+  public void getCsobLog(String date,String orderId) {
+    List<String> logs = Logger.getLogs(date,orderId);
+    WritableMap map = Arguments.createMap();
+    WritableArray array = Arguments.createArray();
+    for (String log : logs) {
+      array.pushString(log);
+    }
+    map.putArray("result", array);
+    map.putString("type", "GET_LOGS");
+    emit(map);
+  }
+
+  @ReactMethod
+  public void deleteCsobLog(String date) {
+    boolean result = Logger.deleteLogs(date);
+    WritableMap map = Arguments.createMap();
+    map.putString("type", "DELETE_LOG");
+    map.putString("status", result ? "SUCCESS" : "ERROR");
+    emit(map);
+  }
+
+  @ReactMethod
+  public void createCsobReversal(String approvalCode) throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createReversalRequest(approvalCode), "REVERSAL", "REVERSAL").execute();
   }
 
   @ReactMethod

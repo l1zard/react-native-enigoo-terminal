@@ -17,54 +17,40 @@ const EnigooTerminal = NativeModules.EnigooTerminal
       }
     );
 
-export function createCsobPayment(
-  price: string,
+export function initCsobConnection(
   ipAddress: string,
-  port: number,
+  port: string,
   deviceId: string
 ): void {
-  return EnigooTerminal.createCsobPayment(price, ipAddress, port, deviceId);
+  return EnigooTerminal.initCsobConnection(ipAddress, port, deviceId);
 }
 
-export function createCsobRefund(
-  price: string,
-  ipAddress: string,
-  port: number,
-  deviceId: string
-): void {
-  return EnigooTerminal.createCsobRefund(price, ipAddress, port, deviceId);
+export function createCsobGetAppInfo(): void {
+  return EnigooTerminal.createCsobGetAppInfo();
 }
 
-export function createCsobCloseTotals(
-  ipAddress: string,
-  port: number,
-  deviceId: string
-): void{
-  return EnigooTerminal.createCsobCloseTotals(ipAddress, port, deviceId);
+export function createCsobPayment(price: string): void {
+  return EnigooTerminal.createCsobPayment(price);
 }
 
-export function createCsobHandshake(
-  ipAddress: string,
-  port: number,
-  deviceId: string
-): void{
-  return EnigooTerminal.createCsobHandshake(ipAddress, port, deviceId);
+export function createCsobRefund(price: string): void {
+  return EnigooTerminal.createCsobRefund(price);
 }
 
-export function createCsobTmsBCall(
-  ipAddress: string,
-  port: number,
-  deviceId: string
-): void{
-  return EnigooTerminal.createCsobTmsBCall(ipAddress, port, deviceId);
+export function createCsobCloseTotals(): void {
+  return EnigooTerminal.createCsobCloseTotals();
 }
 
-export function createCsobTmsNCall(
-  ipAddress: string,
-  port: number,
-  deviceId: string
-): void{
-  return EnigooTerminal.createCsobTmsNCall(ipAddress, port, deviceId);
+export function createCsobHandshake(): void {
+  return EnigooTerminal.createCsobHandshake();
+}
+
+export function createCsobTmsBCall(): void {
+  return EnigooTerminal.createCsobTmsBCall();
+}
+
+export function createCsobTmsNCall(): void {
+  return EnigooTerminal.createCsobTmsNCall();
 }
 
 export function createFiscalProPayment(

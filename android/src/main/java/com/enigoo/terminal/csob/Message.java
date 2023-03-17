@@ -36,8 +36,7 @@ public class Message {
             char[] test = new char[2];
             test[0] = hexChars[j * 2];
             test[1] = hexChars[j * 2 + 1];
-
-            if (new String(test).equals("1C") || new String(test).equals("03") || new String(test).equals("1D")) {
+            if((test[0] == '1' && test[1]=='C') || (test[0]=='0' && test[1]=='3') || (test[0]=='1' && test[1]=='D')){
                 messages.add(createMessage(j - lastPosition, lastPosition));
                 lastPosition = j;
             }

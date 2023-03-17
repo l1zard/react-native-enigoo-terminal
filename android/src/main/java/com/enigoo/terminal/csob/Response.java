@@ -6,45 +6,36 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class Response {
 
-    private static String TERMINAL_PING = "B0";
-    private static String TERMINAL_RESPONSE = "B2";
-    private static String TICKET_RESPONSE = "B4";
+    private static final String SUCCESS = "000";
+    private static final String USER_CANCEL = "-01";
+    private static final String CARD_ERROR = "-09";
+    private static final String CARD_EXPIRED = "-10";
+    private static final String CARD_YOUNG = "-11";
+    private static final String CARD_NO_ENOUGH_MONEY = "-12";
+    private static final String TIMEOUT = "-18";
 
-
-    private static final String NORMAL_PURCHASE = "T00";
-    private static final String RETURN = "T04";
-    private static final String CASH_ADVANCE = "T05";
-    private static final String PURCHASE_WITH_CASHBACK = "T08";
-    private static final String REVERSAL = "T10";
-    private static final String CLOSE_TOTALS = "T60";
-    private static final String TMS_CALL = "T90";
-    private static final String HANDSHAKE = "T95";
-
-    private static final String SUCCESS = "R000";
-    private static final String USER_CANCEL = "R-01";
-    private static final String CARD_ERROR = "R-09";
-    private static final String CARD_EXPIRED = "R-10";
-    private static final String CARD_YOUNG = "R-11";
-    private static final String CARD_NO_ENOUGH_MONEY = "R-12";
-    private static final String TIMEOUT = "R-18";
-
-    private static final String OPERATION_DISCARD = "R-21";
-    private static final String CARD_BLOCKED = "R-29";
+    private static final String OPERATION_DISCARD = "-21";
+    private static final String CARD_BLOCKED = "-29";
     private ArrayList<String> block;
     private String messageType;
-    private String transactionType = null;
+    private TransactionTypes transactionType = null;
     private String responseType = null;
+
+    private String responseMessage = null;
     private String flag = null;
     private boolean isDone = false;
     private boolean wantTicket = false;
+    private boolean wantSign = false;
+    private boolean forcedConfirm = false;
+
 
     private List<String> merchantRecipe = new ArrayList<>();
 
@@ -55,29 +46,58 @@ public class Response {
     public Response(ArrayList<String> block) {
         this.block = block;
         if (block.size() > 0) {
-            this.messageType = (String.valueOf(block.get(0).charAt(0)) + String.valueOf(block.get(0).charAt(1)));
+            this.messageType = (block.get(0).substring(0, 2));
+            parseResponseType();
+            parseResponseMessage();
         } else {
             this.messageType = "";
         }
         switch (this.messageType) {
             case "B2":
-                this.setDone(true);
-                this.setResponseType(block.get(2));
-                this.setTransactionType(block.get(1));
+                setDone(true);
+                parseTransactionType();
                 checkFlag(block.get(0).substring(24, 28));
                 break;
             case "B4":
-                this.setDone(true);
-                this.setResponseType(block.get(2));
+                setDone(true);
                 break;
             default:
                 this.setDone(false);
-                this.setResponseType(null);
-
         }
     }
 
-    public Response(String transactionType, String responseType) {
+    private void parseTransactionType() {
+        for (String b : block) {
+            if (b.startsWith("T")) {
+                this.setTransactionType(getTransactionType(b));
+            }
+        }
+    }
+
+    private TransactionTypes getTransactionType(String type) {
+        for (TransactionTypes trType : TransactionTypes.values()) {
+            if (trType.getCode().equals(type)) return trType;
+        }
+        return null;
+    }
+
+    private void parseResponseType() {
+        for (String b : block) {
+            if (b.startsWith("R")) {
+                this.responseType = b.substring(1);
+            }
+        }
+    }
+
+    private void parseResponseMessage() {
+        for (String b : block) {
+            if (b.startsWith("g")) {
+                this.responseMessage = b.substring(1);
+            }
+        }
+    }
+
+    public Response(TransactionTypes transactionType, String responseType) {
         this.transactionType = transactionType;
         this.responseType = responseType;
         this.isDone = false;
@@ -100,13 +120,18 @@ public class Response {
 
     private void checkFlag(String hexFlag) {
         this.setFlag(Integer.toBinaryString(Integer.parseInt(hexFlag, 16)));
-        if (this.getMessageType().equals("B2") && flag.charAt(this.flag.length() - 2) == '1') {
+        if (this.getMessageType().equals("B2") && flag.charAt(14) == '1') {
             this.setWantTicket(true);
+        }
+        if (this.getMessageType().equals("B2") && flag.charAt(15) == '1') {
+            this.setWantSign(true);
+        }if(this.getMessageType().equals("B2") && flag.charAt(0)=='1'){
+            this.setForcedConfirm(true);
         }
     }
 
     public boolean wantNext() {
-        return block.get(block.size() - 1).equals("t1");
+        return block.size() > 0 && block.get(block.size() - 1).equals("t1");
     }
 
     public boolean isWantTicket() {
@@ -117,11 +142,19 @@ public class Response {
         this.wantTicket = wantTicket;
     }
 
-    public String getTransactionType() {
+    public boolean isWantSign() {
+        return wantSign;
+    }
+
+    private void setWantSign(boolean wantSign) {
+        this.wantSign = wantSign;
+    }
+
+    public TransactionTypes getTransactionType() {
         return transactionType;
     }
 
-    public void setTransactionType(String transactionType) {
+    private void setTransactionType(TransactionTypes transactionType) {
         this.transactionType = transactionType;
     }
 
@@ -137,7 +170,7 @@ public class Response {
         return isDone;
     }
 
-    public void setDone(boolean done) {
+    private void setDone(boolean done) {
         isDone = done;
     }
 
@@ -145,20 +178,35 @@ public class Response {
         return messageType;
     }
 
-    public void setMessageType(String messageType) {
+    private void setMessageType(String messageType) {
         this.messageType = messageType;
     }
 
-    public void setMessages(List<ResponseMessage> messages){
-      this.messages = messages;
+    public void setMessages(List<ResponseMessage> messages) {
+        this.messages = messages;
+    }
+
+    public boolean isForcedConfirm() {
+        return forcedConfirm;
+    }
+
+    private void setForcedConfirm(boolean forcedConfirm) {
+        this.forcedConfirm = forcedConfirm;
     }
 
     public void Logger() {
-        Log.i("TP", this.getTransactionType());
+        Log.i("TP", this.getTransactionType().getCode());
         Log.i("RT", this.getResponseType());
     }
 
-    public void setFlag(String flag) {
+    private void setFlag(String flag) {
+        if (flag.length() < 16) {
+            StringBuilder flagBuilder = new StringBuilder(flag);
+            while (flagBuilder.length() != 16) {
+                flagBuilder.insert(0, "0");
+            }
+            flag = flagBuilder.toString();
+        }
         this.flag = flag;
     }
 
@@ -180,34 +228,16 @@ public class Response {
 
     public WritableMap toReactObject() {
         WritableMap params = Arguments.createMap();
-        switch (this.transactionType) {
-            case NORMAL_PURCHASE:
-                params.putString("type", "PURCHASE");
-                break;
-            case RETURN:
-                params.putString("type", "RETURN");
-                break;
-            case PURCHASE_WITH_CASHBACK:
-                params.putString("type", "PURCHASE_WITH_CASHBACK");
-                break;
-            case REVERSAL:
-                params.putString("type", "REVERSAL");
-                break;
-            case CLOSE_TOTALS:
-                params.putString("type", "CLOSE_TOTALS");
-                break;
-            case HANDSHAKE:
-                params.putString("type", "HANDSHAKE");
-                break;
-            case TMS_CALL:
-                params.putString("type", "TMS_CALL");
-                break;
-            case "0":
-                params.putString("type", "CONNECTION");
-                break;
-            default:
-                params.putString("type", "UNKNOWN");
-                break;
+        params.putBoolean("sign", isWantSign());
+
+        if(isWantSign()){
+            params.putString("approvalCode",parseApprovalCode());
+        }
+
+        if (transactionType != null) {
+            params.putString("type", this.transactionType.getName());
+        } else {
+            params.putString("type", "CONNECTION");
         }
         switch (this.responseType) {
             case SUCCESS:
@@ -252,41 +282,51 @@ public class Response {
         }
         params.putArray("customerRecipe", arrayCust);
 
-        params.putString("responseCode",responseType);
-        try {
-          WritableArray arrayMess = parseMessages();
-          params.putArray("messages", arrayMess);
-        }catch (UnsupportedEncodingException ex){
+        params.putString("responseCode", responseType);
 
-        }
+        params.putString("responseMessage", responseMessage);
 
-
+        WritableArray arrayMess = parseMessages();
+        params.putArray("messages", arrayMess);
         return params;
     }
 
-    private WritableArray parseMessages() throws UnsupportedEncodingException {
-      char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-      WritableArray messagesArray = Arguments.createArray();
-      for (ResponseMessage mess: this.messages) {
-        char[] hexChars = new char[mess.getMessage().length * 2];
-        for (int j = 0; j < mess.getMessage().length; j++) {
-          int v = mess.getMessage()[j] & 0xFF;
-          hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-          hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+    private String parseApprovalCode(){
+        for (String b:block) {
+            if(b.startsWith("F")) return b.substring(1);
         }
+        return "";
+    }
 
+    private String parseMessage(byte[] messageByte) {
+        char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+        char[] hexChars = new char[messageByte.length * 2];
+        for (int j = 0; j < messageByte.length; j++) {
+            int v = messageByte[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
         String hexCharsInString = new String(hexChars);
         hexCharsInString = hexCharsInString.replaceAll("(.{" + 2 + "})", "$1 ").trim();
+        return hexCharsInString;
 
-        WritableMap obj = Arguments.createMap();
-        String date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).format(mess.getDate());
+    }
+
+    private String parseDate(Date date) {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.getDefault()).format(date);
+    }
+
+    private WritableArray parseMessages() {
+        WritableArray messagesArray = Arguments.createArray();
+        for (ResponseMessage mess : this.messages) {
 
 
-        obj.putString("date",date);
-        obj.putString("data",hexCharsInString);
-        messagesArray.pushMap(obj);
-      }
+            WritableMap obj = Arguments.createMap();
+            obj.putString("date", parseDate(mess.getDate()));
+            obj.putString("data", parseMessage(mess.getMessage()));
+            messagesArray.pushMap(obj);
+        }
 
-      return messagesArray;
+        return messagesArray;
     }
 }
