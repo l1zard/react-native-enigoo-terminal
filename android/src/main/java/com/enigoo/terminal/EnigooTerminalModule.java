@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutionException;
 @ReactModule(name = EnigooTerminalModule.NAME)
 public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   public static final String NAME = "EnigooTerminal";
-  private static ReactApplicationContext reactApplicationContext = null;
+  public static ReactApplicationContext reactApplicationContext = null;
 
   public EnigooTerminalModule(ReactApplicationContext reactContext) {
     super(reactContext);
