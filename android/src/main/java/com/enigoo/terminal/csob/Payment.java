@@ -101,6 +101,7 @@ public class Payment {
             case TMS_CALL:
             case GET_APP_INFO:
             case HANDSHAKE:
+            case PASSIVATE:
                 String[] messages2 = {type.getCode()};
                 return this.prevodnik(ProtocolTypes.TRANSACTION_REQUEST.getCode() + PROTOCOL_VERSION + this.deviceId + this.getDate() + "0000" + "0004" + CRC_CONST, messages2);
             default:

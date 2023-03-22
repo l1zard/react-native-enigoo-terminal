@@ -1,7 +1,7 @@
 import { NativeModules, Platform } from 'react-native';
 
 const LINKING_ERROR =
-  `The package 'react-native-enigoo-terminal' doesn't seem to be linked. Make sure: \n\n` +
+  "The package 'react-native-enigoo-terminal' doesn't seem to be linked. Make sure: \n\n" +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo managed workflow\n';
@@ -19,7 +19,7 @@ const EnigooTerminal = NativeModules.EnigooTerminal
 
 export function initCsobConnection(
   ipAddress: string,
-  port: string,
+  port: number,
   deviceId: string
 ): void {
   return EnigooTerminal.initCsobConnection(ipAddress, port, deviceId);
@@ -29,12 +29,12 @@ export function createCsobGetAppInfo(): void {
   return EnigooTerminal.createCsobGetAppInfo();
 }
 
-export function createCsobPayment(price: string): void {
-  return EnigooTerminal.createCsobPayment(price);
+export function createCsobPayment(price: string, orderId: string): void {
+  return EnigooTerminal.createCsobPayment(price, orderId);
 }
 
-export function createCsobRefund(price: string): void {
-  return EnigooTerminal.createCsobRefund(price);
+export function createCsobRefund(price: string, orderId: string): void {
+  return EnigooTerminal.createCsobRefund(price, orderId);
 }
 
 export function createCsobCloseTotals(): void {
@@ -52,7 +52,15 @@ export function createCsobTmsBCall(): void {
 export function createCsobTmsNCall(): void {
   return EnigooTerminal.createCsobTmsNCall();
 }
-
+export function getCsobLog(date: string, orderId: string): void {
+  return EnigooTerminal.getCsobLog(date, orderId);
+}
+export function deleteCsobLog(date: string): void {
+  return EnigooTerminal.deleteCsobLog(date);
+}
+export function createCsobReversal(approvalCode: string): void {
+  return EnigooTerminal.createCsobReversal(approvalCode);
+}
 export function createFiscalProPayment(
   price: string,
   orderId: string,

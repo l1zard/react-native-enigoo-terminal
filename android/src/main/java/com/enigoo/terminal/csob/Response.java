@@ -16,6 +16,7 @@ public class Response {
 
     private static final String SUCCESS = "000";
     private static final String USER_CANCEL = "-01";
+    private static final String MERCH_ERR_CANTDOIT = "-02";
     private static final String CARD_ERROR = "-09";
     private static final String CARD_EXPIRED = "-10";
     private static final String CARD_YOUNG = "-11";
@@ -106,6 +107,7 @@ public class Response {
         this.messages = new ArrayList<>();
         this.merchantRecipe = new ArrayList<>();
         this.customerRecipe = new ArrayList<>();
+        this.block = new ArrayList<>();
     }
 
     public List<String> getRecipes() {
@@ -154,7 +156,7 @@ public class Response {
         return transactionType;
     }
 
-    private void setTransactionType(TransactionTypes transactionType) {
+    public void setTransactionType(TransactionTypes transactionType) {
         this.transactionType = transactionType;
     }
 
@@ -267,6 +269,9 @@ public class Response {
             case "0":
                 params.putString("status", "LOST");
                 break;
+            case MERCH_ERR_CANTDOIT:
+                params.putString("status","MERCH_ERR_CANTDOIT");
+                break;
             default:
                 params.putString("status", "DEFAULT_ERROR");
                 break;
@@ -328,5 +333,24 @@ public class Response {
         }
 
         return messagesArray;
+    }
+
+    private String getOrderId(){
+        for (String b: block) {
+            if(b.startsWith("S")) return b.substring(1);
+        }
+        return "";
+    }
+
+    private String getPrice(){
+        for (String b:block){
+            if(b.startsWith("B")) return b.substring(1);
+        }
+        return "";
+    }
+
+    public boolean compare(Response response){
+        return this.getResponseType().equals(response.getResponseType()) && this.getOrderId().equals(response.getOrderId())
+                && this.getPrice().equals(response.getPrice());
     }
 }

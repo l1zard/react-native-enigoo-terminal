@@ -15,46 +15,71 @@ public class SocketConnection {
     private static boolean isOpen = false;
 
     private static String deviceId = "";
+    private static String ipAddr = "";
+    private static int por = 0;
 
-    public static String getDeviceId(){
+    public static String getDeviceId() {
         return deviceId;
     }
 
-    public static boolean getIsOpen(){
+    public static boolean getIsOpen() {
         return isOpen;
     }
 
     public static void init(String ipAddress, int port, String devId) {
-        if (isOpen) {
+        if (isOpen && ipAddr.equals(ipAddress) && port == por && deviceId.equals(devId)) {
+
+        } else {
             close();
-        }
-        try {
-            socket = new Socket(ipAddress, port);
-            isOpen = true;
-            deviceId = devId;
-            WritableMap map = Arguments.createMap();
-            map.putString("INIT_CONNECTION", "OK");
-            EnigooTerminalModule.emit(map);
-        } catch (IOException e) {
-            WritableMap map = Arguments.createMap();
-            map.putString("INIT_CONNECTION", "ERROR");
-            EnigooTerminalModule.emit(map);
-            isOpen = false;
+            try {
+                deviceId = devId;
+                por = port;
+                ipAddr = ipAddress;
+                socket = new Socket(ipAddress, port);
+                isOpen = true;
+                WritableMap map = Arguments.createMap();
+                map.putString("type", "INIT_CONNECTION");
+                map.putString("status", "SUCCESS");
+                EnigooTerminalModule.emit(map);
+            } catch (IOException e) {
+                WritableMap map = Arguments.createMap();
+                map.putString("type", "INIT_CONNECTION");
+                map.putString("status", "ERROR");
+                EnigooTerminalModule.emit(map);
+                isOpen = false;
+            }
         }
     }
 
     public static boolean send(byte[] message) throws IOException {
+        if (!isOpen) {
+            try {
+                socket = new Socket(ipAddr, por);
+                isOpen = true;
+            } catch (IOException e) {
+                isOpen = false;
+            }
+        }
         if (isOpen) {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.write(message);
             out.flush();
             return true;
         } else {
+
             throw new IOException();
         }
     }
 
     public static byte[] read(int timeInSeconds) throws IOException {
+        if (!isOpen) {
+            try {
+                socket = new Socket(ipAddr, por);
+                isOpen = true;
+            } catch (IOException e) {
+                isOpen = false;
+            }
+        }
         if (isOpen) {
             if (timeInSeconds > 0) {
                 socket.setSoTimeout(timeInSeconds * 1000);
@@ -71,7 +96,7 @@ public class SocketConnection {
         if (isOpen) {
             try {
                 socket.close();
-                deviceId = "";
+                isOpen = false;
             } catch (IOException e) {
 
             }

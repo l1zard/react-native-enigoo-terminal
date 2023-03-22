@@ -26,10 +26,6 @@ public class ProcessMessage implements Runnable {
         this.messages = new ArrayList<>();
         this.orderId = orderId;
 
-        ResponseMessage resMess = new ResponseMessage(new Date(), message);
-        messages.add(resMess);
-        Logger.log(resMess,new Date(),orderId,SocketConnection.getDeviceId());
-
     }
 
     final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -74,9 +70,11 @@ public class ProcessMessage implements Runnable {
                         - Odešlu T82 - get last trasaction - čekám 5s na odpověď
                         - Ověřím getLastTransaction s vytvořenou platbou
              */
-            Response response = null;
 
-            switch (type){
+            Response response = null;
+            boolean connectionState = true;
+
+            switch (type) {
                 case "PAYMENT":
                 case "REFUND":
                 case "REVERSAL":
@@ -85,35 +83,38 @@ public class ProcessMessage implements Runnable {
                 case "TMS_CALL":
 
                     //1. Ověř spojení pomocí T80
-                    verifyConnection();
+                    connectionState = verifyConnection();
                     break;
             }
-            //2. odešli zprávu B1
-            activateRequest();
-            //Očekává se přijetí B0 (potvzení od terminálu, že přijal zprávu)
-            //A následně se očekává B2 (potvrzení/zamítnutí platby)
-            //3. Zpracuj výsledky platby/vratky
-            response = waitForPayment();
-            //Pokud si máš vyžádat lísteček, tak si ho vyžádej
-            if (response != null && response.isWantTicket()) {
-                //DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                response.setMerchantRecipe(getRecipes("tM"));
-                response.setCustomerRecipe(getRecipes("tC"));
-            }
+            if (connectionState) {
+                //2. odešli zprávu B1
+                activateRequest();
+                //Očekává se přijetí B0 (potvzení od terminálu, že přijal zprávu)
+                //A následně se očekává B2 (potvrzení/zamítnutí platby)
+                //3. Zpracuj výsledky platby/vratky
+                response = waitForPayment();
+                //Pokud si máš vyžádat lísteček, tak si ho vyžádej
+                if (response != null && response.isWantTicket()) {
+                    //DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                    response.setMerchantRecipe(getRecipes("tM"));
+                    response.setCustomerRecipe(getRecipes("tC"));
+                }
 
-            //emit result
-            if (response != null){
-                response.setMessages(messages);
-                EnigooTerminalModule.emit(response.toReactObject());
-            }else{
-                throw new IOException();
+                //emit result
+                if (response != null) {
+                    response.setMessages(messages);
+                    EnigooTerminalModule.emit(response.toReactObject());
+                } else {
+                    throw new IOException();
+                }
             }
 
         } catch (SocketTimeoutException ex) {
+            SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
-            EnigooTerminalModule.emit(response.toReactObject());
         } catch (IOException e) {
+            SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
             EnigooTerminalModule.emit(response.toReactObject());
@@ -121,28 +122,36 @@ public class ProcessMessage implements Runnable {
 
     }
 
-    private void verifyConnection() throws IOException {
+    private boolean verifyConnection() throws IOException {
         byte[] t80Req = payment.createRequest(TransactionTypes.GET_APP_INFO, 0, null);
-        boolean result = SocketConnection.send(t80Req);
+        boolean result = false;
+
+        SocketConnection.send(t80Req);
+
         ResponseMessage resMess = new ResponseMessage(new Date(), t80Req);
         messages.add(resMess);
-        Logger.log(resMess,resMess.getDate(),SocketConnection.getDeviceId(),orderId);
-        if(result){
-            Response responseForT80 = waitForResponse(5);
+        Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
+        Response responseForT80 = waitForResponse(5);
+        if (responseForT80.getResponseType().equals("000")) {
             emitStatus("CONNECTION", "SUCCESS");
-        }else{
-            throw new IOException();
+            return true;
+        } else {
+            emitStatus("CONNECTION", "ERROR");
+            responseForT80.setMessages(messages);
+            EnigooTerminalModule.emit(responseForT80.toReactObject());
+            return false;
         }
+
     }
 
     private void activateRequest() throws IOException {
         boolean result = SocketConnection.send(message);
         ResponseMessage resMess = new ResponseMessage(new Date(), message);
         messages.add(resMess);
-        Logger.log(resMess,resMess.getDate(),SocketConnection.getDeviceId(),orderId);
-        if(result){
+        Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
+        if (result) {
             emitStatus("CREATE_" + this.type, "SUCCESS");
-        }else{
+        } else {
             throw new IOException();
         }
 
@@ -158,17 +167,20 @@ public class ProcessMessage implements Runnable {
             SocketConnection.send(req);
             ResponseMessage resMess = new ResponseMessage(new Date(), req);
             messages.add(resMess);
-            Logger.log(resMess,resMess.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
-            if((response.getTransactionType().equals(TransactionTypes.NORMAL_PURCHASE) || response.getTransactionType().equals(TransactionTypes.REFUND)) &&response.isForcedConfirm()){
+            if ((response.getTransactionType().equals(TransactionTypes.NORMAL_PURCHASE) || response.getTransactionType().equals(TransactionTypes.REFUND)) && response.isForcedConfirm()) {
                 //Vyzadej si T82 - lastTransaction a porovnej
-                byte[] reqT82 = payment.createRequest(TransactionTypes.GET_LAST_TRANS,0,null);
+                byte[] reqT82 = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
                 SocketConnection.send(reqT82);
-                ResponseMessage resMessT82 = new ResponseMessage(new Date(),reqT82);
+                ResponseMessage resMessT82 = new ResponseMessage(new Date(), reqT82);
                 messages.add(resMessT82);
-                Logger.log(resMessT82,resMessT82.getDate(),SocketConnection.getDeviceId(),orderId);
+                Logger.log(resMessT82, resMessT82.getDate(), SocketConnection.getDeviceId(), orderId);
                 Response responseT82 = waitForResponse(5);
-                if(!responseT82.getResponseType().equals(response.getResponseType())){
+                //Porovnat OrderId - FID 9S
+                if (!responseT82.compare(response)) {
+                    //pokud se nerovná nic neprováděj dál... Vrať pokladně, že nelze provést
+                    responseT82.setTransactionType(response.getTransactionType());
                     response = responseT82;
                 }
             }
@@ -188,7 +200,7 @@ public class ProcessMessage implements Runnable {
             SocketConnection.send(reqPassivate);
             ResponseMessage resMess = new ResponseMessage(new Date(), reqPassivate);
             messages.add(resMess);
-            Logger.log(resMess,resMess.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
             //očekávej potvrzení B0
             waitForResponse(-1);
@@ -198,13 +210,13 @@ public class ProcessMessage implements Runnable {
             SocketConnection.send(reqGetLastTr);
             ResponseMessage resMessLstTr = new ResponseMessage(new Date(), reqGetLastTr);
             messages.add(resMessLstTr);
-            Logger.log(resMessLstTr,resMessLstTr.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(resMessLstTr, resMessLstTr.getDate(), SocketConnection.getDeviceId(), orderId);
             return waitForResponse(5);
         } catch (SocketTimeoutException ex) {
             emitStatus("CONNECTION", "LOST");
             return null;
         } catch (Exception exp) {
-            emitStatus("UNKNOWN1", exp.toString());
+            emitStatus("UNKNOWN", exp.toString());
             return null;
         }
     }
@@ -216,9 +228,9 @@ public class ProcessMessage implements Runnable {
         boolean next = true;
         while (next) {
             SocketConnection.send(req);
-            ResponseMessage responseMessage = new ResponseMessage(new Date(),req);
+            ResponseMessage responseMessage = new ResponseMessage(new Date(), req);
             messages.add(responseMessage);
-            Logger.log(responseMessage,responseMessage.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
             response = waitForResponse(5);
             recipes.addAll(response.getRecipes());
             next = response.wantNext();
@@ -235,9 +247,9 @@ public class ProcessMessage implements Runnable {
             byte[] data = SocketConnection.read(timeoutInSeconds);
             assert data != null;
             byte[] msg = bytesToMessage(data);
-            ResponseMessage resMess = new ResponseMessage(new Date(),msg);
+            ResponseMessage resMess = new ResponseMessage(new Date(), msg);
             messages.add(resMess);
-            Logger.log(resMess,resMess.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
             Message message = new Message(bytesToMessage(data));
             Response response = message.process();
 

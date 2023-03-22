@@ -92,9 +92,9 @@ public class Logger {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             while (br.ready()) {
-                String[] line = br.readLine().split(";");
-                if(line[1].equals(orderId)){
-                    logs.add(br.readLine());
+                String line = br.readLine();
+                if(line.split(";")[1].equals(orderId)){
+                    logs.add(line);
                 }
             }
         } catch (IOException e) {
@@ -129,8 +129,7 @@ public class Logger {
             if (file == null) {
                 file = createFile(name);
             }
-            FileOutputStream fos = new FileOutputStream(file, true);
-            return fos;
+            return new FileOutputStream(file, true);
         } catch (FileNotFoundException e) {
             return null;
         }
@@ -138,7 +137,7 @@ public class Logger {
 
     private static File getFile(String name) {
         File dir = EnigooTerminalModule.reactApplicationContext.getDir("logs", Context.MODE_PRIVATE);
-        //if (!dir.exists()) dir.mkdirs();
+        if (!dir.exists()) dir.mkdirs();
         File file = new File(dir.getAbsolutePath() + "/" + name);
         if (file.exists()) return file;
         else return null;

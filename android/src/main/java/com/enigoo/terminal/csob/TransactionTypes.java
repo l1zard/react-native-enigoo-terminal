@@ -10,7 +10,7 @@ public enum TransactionTypes {
     PURCHASE_WITH_CASHBACK("T08","PURCHASE_WITH_CASHBACK"),
     REVERSAL("T10","REVERSAL"),
     CLOSE_TOTALS("T60","CLOSE_TOTALS"),
-    SUBTOTALS("65","SUBTOTALS"),
+    SUBTOTALS("T65","SUBTOTALS"),
     HANDSHAKE("T95","HANDSHAKE"),
     GET_APP_INFO("T80","GET_APP_INFO"),
     PASSIVATE("T81","PASSIVATE"),
@@ -32,5 +32,12 @@ public enum TransactionTypes {
 
     public String getName() {
         return name;
+    }
+
+    public static TransactionTypes parseFromString(String type){
+        for (TransactionTypes t:TransactionTypes.values()){
+            if(t.getName().toLowerCase().equals(type.toLowerCase())) return t;
+        }
+        return null;
     }
 }
