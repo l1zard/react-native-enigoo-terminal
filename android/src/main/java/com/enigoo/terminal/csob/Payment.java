@@ -140,7 +140,7 @@ public class Payment {
 
     public byte[] createReversalRequest(String approvalCode) throws IOException {
         String[] messages = {TransactionTypes.REVERSAL.getCode(), "F" + approvalCode};
-        byte[] req = this.prevodnik(ProtocolTypes.TRANSACTION_REQUEST.getCode() + PROTOCOL_VERSION + this.deviceId + this.getDate() + FLAGS + this.calculateLength(messages) + CRC_CONST, messages);
+        byte[] req = this.prevodnik(ProtocolTypes.TRANSACTION_REQUEST.getCode() + PROTOCOL_VERSION + this.deviceId + this.getDate() + FLAGS + "000E" + CRC_CONST, messages);
         WritableMap map = Arguments.createMap();
         map.putString("request", new String(req));
         EnigooTerminalModule.emit(map);
