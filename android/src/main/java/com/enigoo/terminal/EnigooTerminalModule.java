@@ -118,6 +118,19 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void getCsobLogByDate(String date) {
+    List<String> logs = Logger.getLogs(date,null);
+    WritableMap map = Arguments.createMap();
+    WritableArray array = Arguments.createArray();
+    for (String log : logs) {
+      array.pushString(log);
+    }
+    map.putArray("result", array);
+    map.putString("type", "GET_LOGS");
+    emit(map);
+  }
+
+  @ReactMethod
   public void deleteCsobLog(String date) {
     boolean result = Logger.deleteLogs(date);
     WritableMap map = Arguments.createMap();

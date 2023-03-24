@@ -83,7 +83,13 @@ public class Payment {
                 //5. pokladna přijme B2 z terminálu a do 5s odesílá potvrzení příjmu za pomocí B0
                 //Další realizace dle nutnosti vyžádání lístečku
                 String[] messages;
-                if (orderId.length() <= 20) {
+                if (orderId.length() < 10 && orderId.length()>0) {
+                    messages = new String[4];
+                    messages[0] = type.getCode();
+                    messages[1] = parsePrice(price);
+                    messages[2] = "S" + orderId;
+                    messages[3] = CZK_CODE;
+                }else if(orderId.length() >=10 && orderId.length() <20 ){
                     messages = new String[4];
                     messages[0] = type.getCode();
                     messages[1] = parsePrice(price);
@@ -109,6 +115,11 @@ public class Payment {
 
         }
 
+    }
+
+    public byte[] createPassivateRequest() throws IOException {
+        String[] messages2 = {TransactionTypes.PASSIVATE.getCode()};
+        return this.prevodnik(ProtocolTypes.TRANSACTION_REQUEST.getCode() + PROTOCOL_VERSION + this.deviceId + this.getDate() + "8000" + "0004" + CRC_CONST, messages2);
     }
 
     public byte[] createTicketRequest(String t) throws IOException {

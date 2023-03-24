@@ -55,6 +55,9 @@ export function createCsobTmsNCall(): void {
 export function getCsobLog(date: string, orderId: string): void {
   return EnigooTerminal.getCsobLog(date, orderId);
 }
+export function getCsobLogByDate(date: string): void {
+  return EnigooTerminal.getCsobLogByDate(date);
+}
 export function deleteCsobLog(date: string): void {
   return EnigooTerminal.deleteCsobLog(date);
 }

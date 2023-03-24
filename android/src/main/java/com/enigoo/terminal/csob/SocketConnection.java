@@ -27,27 +27,47 @@ public class SocketConnection {
     }
 
     public static void init(String ipAddress, int port, String devId) {
-        if (isOpen && ipAddr.equals(ipAddress) && port == por && deviceId.equals(devId)) {
-
-        } else {
-            close();
-            try {
+        try {
+            if (!isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
+                close();
                 deviceId = devId;
                 por = port;
                 ipAddr = ipAddress;
                 socket = new Socket(ipAddress, port);
                 isOpen = true;
-                WritableMap map = Arguments.createMap();
-                map.putString("type", "INIT_CONNECTION");
-                map.putString("status", "SUCCESS");
-                EnigooTerminalModule.emit(map);
-            } catch (IOException e) {
-                WritableMap map = Arguments.createMap();
-                map.putString("type", "INIT_CONNECTION");
-                map.putString("status", "ERROR");
-                EnigooTerminalModule.emit(map);
-                isOpen = false;
             }
+            Payment pay = new Payment(deviceId);
+            //GET_APP_INFO
+            WritableMap map = Arguments.createMap();
+            /*byte[] req1 = pay.createPassivateRequest();
+            map.putString("type", "TMS_CALL");
+            map.putString("mess",new String(req1,"ISO-8859-2"));
+            EnigooTerminalModule.emit(map);
+
+            send(req1);
+            byte[] res1 = read(-1);*/
+
+            /*byte[] req2 = pay.createRequest(TransactionTypes.PASSIVATE,0,null);
+            map = Arguments.createMap();
+            map.putString("type", "PASSIVATE");
+            map.putString("mess",new String(req2,"ISO-8859-2"));
+            EnigooTerminalModule.emit(map);
+            send(req2);
+
+            byte[] res2 = read(-1);*/
+            map = Arguments.createMap();
+            map.putString("type", "INIT_CONNECTION");
+            map.putString("status", "SUCCESS");
+
+            //map.putString("mess1",new String(res1,"ISO-8859-2"));
+            //map.putString("mess2",new String(res2,"ISO-8859-2"));
+            EnigooTerminalModule.emit(map);
+        } catch (IOException e) {
+            WritableMap map = Arguments.createMap();
+            map.putString("type", "INIT_CONNECTION");
+            map.putString("status", "ERROR");
+            EnigooTerminalModule.emit(map);
+            isOpen = false;
         }
     }
 

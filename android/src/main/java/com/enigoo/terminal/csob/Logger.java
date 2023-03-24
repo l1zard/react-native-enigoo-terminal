@@ -93,7 +93,9 @@ public class Logger {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             while (br.ready()) {
                 String line = br.readLine();
-                if(line.split(";")[1].equals(orderId)){
+                if(orderId==null || orderId.equals("")){
+                    logs.add(line);
+                }else if(line.split(";")[1].equals(orderId)){
                     logs.add(line);
                 }
             }

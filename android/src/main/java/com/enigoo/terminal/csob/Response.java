@@ -296,7 +296,7 @@ public class Response {
         return params;
     }
 
-    private String parseApprovalCode(){
+    public String parseApprovalCode(){
         for (String b:block) {
             if(b.startsWith("F")) return b.substring(1);
         }
@@ -344,7 +344,10 @@ public class Response {
 
     private String getPrice(){
         for (String b:block){
-            if(b.startsWith("B")) return b.substring(1);
+            if(b.startsWith("B") && !block.get(0).equals(b)){
+                String price = b.substring(1);
+                return price.substring(0,price.length()-2)+"."+price.substring(price.length()-2);
+            }
         }
         return "";
     }
