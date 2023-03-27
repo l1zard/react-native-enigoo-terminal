@@ -163,7 +163,10 @@ public class ProcessMessage implements Runnable {
     private Response waitForPayment() {
         try {
             //Očekávej zprávy B0 nebo B2 do max. 60s
-            Response response = waitForResponse(60);
+            int timeout = 60;
+            if(type.equals("GET_APP_INFO")) timeout = 5;
+            
+            Response response = waitForResponse(timeout);
 
             //Potvrď přijetí zprávy B2 pomocí zprávy B0
             byte[] req = payment.createConfirmRequest();
