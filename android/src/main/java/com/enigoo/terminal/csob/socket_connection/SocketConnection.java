@@ -1,12 +1,15 @@
-package com.enigoo.terminal.csob;
+package com.enigoo.terminal.csob.socket_connection;
 
 import com.enigoo.terminal.EnigooTerminalModule;
+import com.enigoo.terminal.csob.Payment;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 public class SocketConnection {
 
@@ -33,7 +36,9 @@ public class SocketConnection {
                 deviceId = devId;
                 por = port;
                 ipAddr = ipAddress;
-                socket = new Socket(ipAddress, port);
+                socket = new Socket();
+                SocketAddress address = new InetSocketAddress(ipAddr,por);
+                socket.connect(address,3000);
                 isOpen = true;
             }
             Payment pay = new Payment(deviceId);
@@ -74,7 +79,9 @@ public class SocketConnection {
     public static boolean send(byte[] message) throws IOException {
         if (!isOpen) {
             try {
-                socket = new Socket(ipAddr, por);
+                socket = new Socket();
+                SocketAddress address = new InetSocketAddress(ipAddr,por);
+                socket.connect(address,3000);
                 isOpen = true;
             } catch (IOException e) {
                 isOpen = false;
@@ -94,7 +101,9 @@ public class SocketConnection {
     public static byte[] read(int timeInSeconds) throws IOException {
         if (!isOpen) {
             try {
-                socket = new Socket(ipAddr, por);
+                socket = new Socket();
+                SocketAddress address = new InetSocketAddress(ipAddr,por);
+                socket.connect(address,3000);
                 isOpen = true;
             } catch (IOException e) {
                 isOpen = false;

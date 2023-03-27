@@ -1,4 +1,4 @@
-package com.enigoo.terminal.csob;
+package com.enigoo.terminal.csob.enums;
 
 public enum ProtocolTypes {
     ACTIVITY_INFO_MESSAGE("B0"),

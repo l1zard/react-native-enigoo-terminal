@@ -1,4 +1,4 @@
-package com.enigoo.terminal.csob;
+package com.enigoo.terminal.csob.enums;
 
 public enum TransactionTypes {
     NORMAL_PURCHASE("T00","NORMAL_PURCHASE"),

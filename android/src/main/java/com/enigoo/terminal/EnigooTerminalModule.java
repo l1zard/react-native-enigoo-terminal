@@ -11,10 +11,11 @@ import androidx.annotation.NonNull;
 
 
 import com.enigoo.terminal.csob.Connection;
-import com.enigoo.terminal.csob.Logger;
 import com.enigoo.terminal.csob.Payment;
-import com.enigoo.terminal.csob.SocketConnection;
-import com.enigoo.terminal.csob.TransactionTypes;
+import com.enigoo.terminal.csob.enums.TransactionTypes;
+import com.enigoo.terminal.csob.logger.LoggerConnection;
+import com.enigoo.terminal.csob.socket_connection.ConnectionInit;
+import com.enigoo.terminal.csob.socket_connection.SocketConnection;
 import com.enigoo.terminal.fiskalpro.FPConnection;
 import com.enigoo.terminal.fiskalpro.FPPayment;
 import com.enigoo.terminal.fiskalpro.FPSendMessage;
@@ -24,7 +25,6 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -33,7 +33,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -65,7 +64,7 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void initCsobConnection(String ipAddress, int port, String deviceId) {
-    SocketConnection.init(ipAddress, port, deviceId);
+    new ConnectionInit(ipAddress, port, deviceId).execute();
   }
 
   @ReactMethod
@@ -106,37 +105,17 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void getCsobLog(String date,String orderId) {
-    List<String> logs = Logger.getLogs(date,orderId);
-    WritableMap map = Arguments.createMap();
-    WritableArray array = Arguments.createArray();
-    for (String log : logs) {
-      array.pushString(log);
-    }
-    map.putArray("result", array);
-    map.putString("type", "GET_LOGS");
-    emit(map);
+    new LoggerConnection("GET",date,orderId).execute();
   }
 
   @ReactMethod
   public void getCsobLogByDate(String date) {
-    List<String> logs = Logger.getLogs(date,null);
-    WritableMap map = Arguments.createMap();
-    WritableArray array = Arguments.createArray();
-    for (String log : logs) {
-      array.pushString(log);
-    }
-    map.putArray("result", array);
-    map.putString("type", "GET_LOGS");
-    emit(map);
+    new LoggerConnection("GET",date,null).execute();
   }
 
   @ReactMethod
   public void deleteCsobLog(String date) {
-    boolean result = Logger.deleteLogs(date);
-    WritableMap map = Arguments.createMap();
-    map.putString("type", "DELETE_LOG");
-    map.putString("status", result ? "SUCCESS" : "ERROR");
-    emit(map);
+    new LoggerConnection("DELETE",date,null).execute();
   }
 
   @ReactMethod

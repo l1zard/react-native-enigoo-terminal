@@ -1,6 +1,8 @@
 package com.enigoo.terminal.csob;
 
 import com.enigoo.terminal.EnigooTerminalModule;
+import com.enigoo.terminal.csob.enums.ProtocolTypes;
+import com.enigoo.terminal.csob.enums.TransactionTypes;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 

@@ -2,6 +2,7 @@ package com.enigoo.terminal.csob;
 
 import android.util.Log;
 
+import com.enigoo.terminal.csob.enums.TransactionTypes;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;

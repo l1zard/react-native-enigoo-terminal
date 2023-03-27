@@ -1,8 +1,9 @@
-package com.enigoo.terminal.csob;
+package com.enigoo.terminal.csob.logger;
 
 import android.content.Context;
 
 import com.enigoo.terminal.EnigooTerminalModule;
+import com.enigoo.terminal.csob.ResponseMessage;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 
