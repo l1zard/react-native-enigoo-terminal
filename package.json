@@ -1,6 +1,6 @@
 {
   "name": "react-native-enigoo-terminal",
-  "version": "0.8.13",
+  "version": "0.8.14",
   "description": "Enigoo Terminal",
   "main": "lib/commonjs/index.js",
   "module": "lib/module/index.js",
