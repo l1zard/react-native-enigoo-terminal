@@ -2,6 +2,10 @@ package com.enigoo.terminal.csob;
 
 import android.os.AsyncTask;
 
+import com.enigoo.terminal.EnigooTerminalModule;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
+
 import java.io.IOException;
 
 public class Connection extends AsyncTask<Void, Void, Boolean> {
@@ -24,9 +28,22 @@ public class Connection extends AsyncTask<Void, Void, Boolean> {
     protected Boolean doInBackground(Void... voids) {
         try {
             ProcessMessage processMessage = new ProcessMessage(payment,message,type,orderId);
-            Thread t = new Thread(processMessage);
-            t.start();
 
+
+
+            int count = 0;
+            for(Thread t: Thread.getAllStackTraces().keySet()){
+
+                if(t instanceof ConnectionThread){
+                    count++;
+                }
+            }
+            WritableMap map = Arguments.createMap();
+            map.putInt("THREADS",count);
+            EnigooTerminalModule.emit(map);
+
+            ConnectionThread t = new ConnectionThread(processMessage);
+            t.start();
             return true;
 
         } catch (IOException  e) {

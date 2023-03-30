@@ -33,6 +33,10 @@ export function createCsobPayment(price: string, orderId: string): void {
   return EnigooTerminal.createCsobPayment(price, orderId);
 }
 
+export function createCsobPassivate(): void {
+  return EnigooTerminal.createCsobPassivate();
+}
+
 export function createCsobRefund(price: string, orderId: string): void {
   return EnigooTerminal.createCsobRefund(price, orderId);
 }

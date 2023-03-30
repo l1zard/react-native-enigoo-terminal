@@ -112,7 +112,7 @@ public class ProcessMessage implements Runnable {
                 }
             }
 
-        } catch (SocketTimeoutException ex) {
+        }catch (SocketTimeoutException ex) {
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
@@ -131,7 +131,7 @@ public class ProcessMessage implements Runnable {
 
         SocketConnection.send(t80Req);
 
-        ResponseMessage resMess = new ResponseMessage(new Date(), t80Req);
+        ResponseMessage resMess = new ResponseMessage(new Date(), t80Req,false);
         messages.add(resMess);
         Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
         Response responseForT80 = waitForResponse(5);
@@ -149,7 +149,7 @@ public class ProcessMessage implements Runnable {
 
     private void activateRequest() throws IOException {
         boolean result = SocketConnection.send(message);
-        ResponseMessage resMess = new ResponseMessage(new Date(), message);
+        ResponseMessage resMess = new ResponseMessage(new Date(), message,false);
         messages.add(resMess);
         Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
         if (result) {
@@ -160,18 +160,17 @@ public class ProcessMessage implements Runnable {
 
     }
 
-    private Response waitForPayment() {
+    private Response waitForPayment() throws IOException {
         try {
             //Očekávej zprávy B0 nebo B2 do max. 60s
             int timeout = 60;
-            if(type.equals("GET_APP_INFO")) timeout = 5;
-            
+            //if(type.equals("PASSIVATE")) timeout = 3;
             Response response = waitForResponse(timeout);
 
             //Potvrď přijetí zprávy B2 pomocí zprávy B0
             byte[] req = payment.createConfirmRequest();
             SocketConnection.send(req);
-            ResponseMessage resMess = new ResponseMessage(new Date(), req);
+            ResponseMessage resMess = new ResponseMessage(new Date(), req,false);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
@@ -179,7 +178,7 @@ public class ProcessMessage implements Runnable {
                 //Vyzadej si T82 - lastTransaction a porovnej
                 byte[] reqT82 = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
                 SocketConnection.send(reqT82);
-                ResponseMessage resMessT82 = new ResponseMessage(new Date(), reqT82);
+                ResponseMessage resMessT82 = new ResponseMessage(new Date(), reqT82,false);
                 messages.add(resMessT82);
                 Logger.log(resMessT82, resMessT82.getDate(), SocketConnection.getDeviceId(), orderId);
                 Response responseT82 = waitForResponse(5);
@@ -194,8 +193,6 @@ public class ProcessMessage implements Runnable {
         } catch (SocketTimeoutException ex) {
             //Nedostali jsme do 60 sekund žádné potvrzení B0 ani B2
             return processTimedOutResponse();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -204,7 +201,7 @@ public class ProcessMessage implements Runnable {
             //Proveď passivate
             byte[] reqPassivate = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
             SocketConnection.send(reqPassivate);
-            ResponseMessage resMess = new ResponseMessage(new Date(), reqPassivate);
+            ResponseMessage resMess = new ResponseMessage(new Date(), reqPassivate,false);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
@@ -214,7 +211,7 @@ public class ProcessMessage implements Runnable {
             //Získej data o poslední transakci
             byte[] reqGetLastTr = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
             SocketConnection.send(reqGetLastTr);
-            ResponseMessage resMessLstTr = new ResponseMessage(new Date(), reqGetLastTr);
+            ResponseMessage resMessLstTr = new ResponseMessage(new Date(), reqGetLastTr,false);
             messages.add(resMessLstTr);
             Logger.log(resMessLstTr, resMessLstTr.getDate(), SocketConnection.getDeviceId(), orderId);
             return waitForResponse(5);
@@ -234,7 +231,7 @@ public class ProcessMessage implements Runnable {
         boolean next = true;
         while (next) {
             SocketConnection.send(req);
-            ResponseMessage responseMessage = new ResponseMessage(new Date(), req);
+            ResponseMessage responseMessage = new ResponseMessage(new Date(), req,false);
             messages.add(responseMessage);
             Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
             response = waitForResponse(5);
@@ -253,7 +250,7 @@ public class ProcessMessage implements Runnable {
             byte[] data = SocketConnection.read(timeoutInSeconds);
             assert data != null;
             byte[] msg = bytesToMessage(data);
-            ResponseMessage resMess = new ResponseMessage(new Date(), msg);
+            ResponseMessage resMess = new ResponseMessage(new Date(), msg,true);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
             Message message = new Message(bytesToMessage(data));

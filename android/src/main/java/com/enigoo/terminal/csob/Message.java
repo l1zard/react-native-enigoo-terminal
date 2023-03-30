@@ -55,7 +55,7 @@ public class Message {
         try {
             return new String(newBytes, "ISO-8859-2");
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            return "";
         }
     }
 }

@@ -84,6 +84,11 @@ public class EnigooTerminalModule extends ReactContextBaseJavaModule {
     Payment pay = new Payment(SocketConnection.getDeviceId());
     new Connection(pay, pay.createRequest(TransactionTypes.NORMAL_PURCHASE, Double.parseDouble(price), orderId), "PAYMENT", orderId).execute();
   }
+  @ReactMethod
+  public void createCsobPassivate() throws IOException {
+    Payment pay = new Payment(SocketConnection.getDeviceId());
+    new Connection(pay, pay.createRequest(TransactionTypes.PASSIVATE, 0, null), "PASSIVATE", "PASSIVATE").execute();
+  }
 
   @ReactMethod
   public void createCsobRefund(String price, String orderId) throws IOException {

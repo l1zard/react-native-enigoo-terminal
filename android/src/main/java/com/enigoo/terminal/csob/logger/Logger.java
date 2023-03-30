@@ -16,10 +16,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -29,35 +27,11 @@ public class Logger {
     /**
      * Method to save log to the day
      *
-     * @param messages
+     * @param message
      * @param date
+     * @param deviceId
+     * @param orderId
      */
-    public static void log(List<ResponseMessage> messages, Date date, String deviceId, String orderId) {
-        String pattern = "yyyy-MM-dd";
-        SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
-        String fileName = dateFormat.format(date) + ".txt";
-        FileOutputStream fos = getOutputStream(fileName);
-        if (fos == null) {
-            WritableMap map = Arguments.createMap();
-            map.putString("ERROR", "log_not_exist");
-            EnigooTerminalModule.emit(map);
-        } else {
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-            try {
-                for (ResponseMessage message : messages) {
-                    bw.write(deviceId+";" + orderId + ";" +
-                            parseDate(message.getDate()) + ";" +
-                            parseMessage(message.getMessage()) + ";");
-                    bw.newLine();
-                }
-                bw.flush();
-                bw.close();
-            } catch (IOException e) {
-
-            }
-        }
-    }
-
     public static void log(ResponseMessage message, Date date, String deviceId, String orderId) {
         String pattern = "yyyy-MM-dd";
         SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
@@ -70,7 +44,8 @@ public class Logger {
         } else {
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
             try {
-                bw.write(deviceId + ";" + orderId + ";" +
+                //deviceId;orderId;in;date;message
+                bw.write(deviceId + ";" + orderId + ";" + (message.isIn() ? "1" : "0") + ";" +
                         parseDate(message.getDate()) + ";" +
                         parseMessage(message.getMessage()) + ";");
                 bw.newLine();
@@ -86,7 +61,7 @@ public class Logger {
      * @param date Date in format "YYYY-MM-DD"
      * @return list of logs from the day
      */
-    public static List<String> getLogs(String date,String orderId) {
+    public static List<String> getLogs(String date, String orderId) {
         List<String> logs = new ArrayList<>();
         FileInputStream fis = getInputStream(date + ".txt");
         if (fis == null) return logs;
@@ -94,9 +69,9 @@ public class Logger {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             while (br.ready()) {
                 String line = br.readLine();
-                if(orderId==null || orderId.equals("")){
+                if (orderId == null || orderId.equals("")) {
                     logs.add(line);
-                }else if(line.split(";")[1].equals(orderId)){
+                } else if (line.split(";")[1].equals(orderId)) {
                     logs.add(line);
                 }
             }
@@ -179,59 +154,4 @@ public class Logger {
 
     }
 
-    public static List<String> getLastTransactionData(){
-        String date = parseDate(new Date());
-        List<String> logs = getLogs(date,null);
-        Collections.reverse(logs);
-        for (String l:logs) {
-            String [] logMess = l.split(";");
-            List<String> messages = split(logMess[logMess.length-1].replaceAll(" ","").getBytes());
-            for (String m: messages) {
-                if(m.startsWith("T")) return messages;
-            }
-        }
-
-        return new ArrayList<>();
-    }
-    static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-
-
-    private static List<String> split(byte[] bytes) {
-        List<String> messages = new ArrayList<>();
-
-        char[] hexChars = new char[bytes.length * 2];
-        int count = 0;
-        boolean isHeader = false;
-        int lastPosition = 0;
-
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-
-            char[] test = new char[2];
-            test[0] = hexChars[j * 2];
-            test[1] = hexChars[j * 2 + 1];
-            if((test[0] == '1' && test[1]=='C') || (test[0]=='0' && test[1]=='3') || (test[0]=='1' && test[1]=='D')){
-                messages.add(createMessage(bytes,j - lastPosition, lastPosition));
-                lastPosition = j;
-            }
-
-        }
-        return messages;
-    }
-
-    private static String createMessage(byte[]bytes,int length, int starter) {
-        byte[] newBytes = new byte[(length - 1)];
-
-        for (int j = 0; j < newBytes.length; j++) {
-            newBytes[j] = bytes[j + 1 + starter];
-        }
-
-        try {
-            return new String(newBytes, "ISO-8859-2");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

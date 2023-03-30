@@ -128,7 +128,8 @@ public class Response {
         }
         if (this.getMessageType().equals("B2") && flag.charAt(15) == '1') {
             this.setWantSign(true);
-        }if(this.getMessageType().equals("B2") && flag.charAt(0)=='1'){
+        }
+        if (this.getMessageType().equals("B2") && flag.charAt(0) == '1') {
             this.setForcedConfirm(true);
         }
     }
@@ -233,8 +234,8 @@ public class Response {
         WritableMap params = Arguments.createMap();
         params.putBoolean("sign", isWantSign());
 
-        if(isWantSign()){
-            params.putString("approvalCode",parseApprovalCode());
+        if (isWantSign()) {
+            params.putString("approvalCode", parseApprovalCode());
         }
 
         if (transactionType != null) {
@@ -271,7 +272,7 @@ public class Response {
                 params.putString("status", "LOST");
                 break;
             case MERCH_ERR_CANTDOIT:
-                params.putString("status","MERCH_ERR_CANTDOIT");
+                params.putString("status", "MERCH_ERR_CANTDOIT");
                 break;
             default:
                 params.putString("status", "DEFAULT_ERROR");
@@ -297,9 +298,9 @@ public class Response {
         return params;
     }
 
-    public String parseApprovalCode(){
-        for (String b:block) {
-            if(b.startsWith("F")) return b.substring(1);
+    public String parseApprovalCode() {
+        for (String b : block) {
+            if (b.startsWith("F")) return b.substring(1);
         }
         return "";
     }
@@ -330,30 +331,31 @@ public class Response {
             WritableMap obj = Arguments.createMap();
             obj.putString("date", parseDate(mess.getDate()));
             obj.putString("data", parseMessage(mess.getMessage()));
+            obj.putInt("in", mess.isIn() ? 1 : 0);
             messagesArray.pushMap(obj);
         }
 
         return messagesArray;
     }
 
-    private String getOrderId(){
-        for (String b: block) {
-            if(b.startsWith("S")) return b.substring(1);
+    private String getOrderId() {
+        for (String b : block) {
+            if (b.startsWith("S")) return b.substring(1);
         }
         return "";
     }
 
-    private String getPrice(){
-        for (String b:block){
-            if(b.startsWith("B") && !block.get(0).equals(b)){
+    private String getPrice() {
+        for (String b : block) {
+            if (b.startsWith("B") && !block.get(0).equals(b)) {
                 String price = b.substring(1);
-                return price.substring(0,price.length()-2)+"."+price.substring(price.length()-2);
+                return price.substring(0, price.length() - 2) + "." + price.substring(price.length() - 2);
             }
         }
         return "";
     }
 
-    public boolean compare(Response response){
+    public boolean compare(Response response) {
         return this.getResponseType().equals(response.getResponseType()) && this.getOrderId().equals(response.getOrderId())
                 && this.getPrice().equals(response.getPrice());
     }
