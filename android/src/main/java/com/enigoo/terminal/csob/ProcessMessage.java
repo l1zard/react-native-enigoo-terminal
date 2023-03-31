@@ -1,6 +1,5 @@
 package com.enigoo.terminal.csob;
 
-
 import com.enigoo.terminal.EnigooTerminalModule;
 import com.enigoo.terminal.csob.enums.TransactionTypes;
 import com.enigoo.terminal.csob.logger.Logger;
@@ -107,7 +106,9 @@ public class ProcessMessage implements Runnable {
                     response.setMerchantRecipe(getRecipes("tM"));
                     response.setCustomerRecipe(getRecipes("tC"));
                 }
-
+                if (type.equals("TMS_CALL")) {
+                    SocketConnection.close();
+                }
                 //emit result
                 if (response != null) {
                     response.setMessages(messages);
@@ -123,7 +124,10 @@ public class ProcessMessage implements Runnable {
             response.setMessages(messages);
             EnigooTerminalModule.emit(response.toReactObject());
         } catch (SocketException exp) {
-            Response res = processPassivate();
+            Response res = null;
+            if (((ConnectionThread) Thread.currentThread()).isPassivating()) {
+                res = processPassivate();
+            }
             if (res == null) {
                 res = new Response(null, "0");
             }
@@ -134,9 +138,6 @@ public class ProcessMessage implements Runnable {
             Response response = new Response(null, "0");
             response.setMessages(messages);
             EnigooTerminalModule.emit(response.toReactObject());
-            WritableMap map = Arguments.createMap();
-            map.putString("ERROR", e.toString());
-            EnigooTerminalModule.emit(map);
         }
 
     }
@@ -189,7 +190,7 @@ public class ProcessMessage implements Runnable {
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
-            if ((response.getTransactionType().equals(TransactionTypes.NORMAL_PURCHASE) || response.getTransactionType().equals(TransactionTypes.REFUND)) && response.isForcedConfirm()) {
+            if (response.getTransactionType() != null && (response.getTransactionType().equals(TransactionTypes.NORMAL_PURCHASE) || response.getTransactionType().equals(TransactionTypes.REFUND)) && response.isForcedConfirm()) {
                 //Vyzadej si T82 - lastTransaction a porovnej
                 byte[] reqT82 = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
                 SocketConnection.send(reqT82);
@@ -230,11 +231,7 @@ public class ProcessMessage implements Runnable {
             messages.add(resMessLstTr);
             Logger.log(resMessLstTr, resMessLstTr.getDate(), SocketConnection.getDeviceId(), orderId);
             return waitForResponse(5);
-        } catch (SocketTimeoutException ex) {
-            emitStatus("CONNECTION", "LOST");
-            return null;
-        } catch (Exception exp) {
-            emitStatus("UNKNOWN", exp.toString());
+        } catch (Exception ex) {
             return null;
         }
     }
@@ -292,7 +289,7 @@ public class ProcessMessage implements Runnable {
             SocketConnection.send(confReq);
             ResponseMessage responseMessageConf = new ResponseMessage(new Date(), confReq, false);
             messages.add(responseMessageConf);
-            Logger.log(responseMessageConf,responseMessageConf.getDate(),SocketConnection.getDeviceId(),orderId);
+            Logger.log(responseMessageConf, responseMessageConf.getDate(), SocketConnection.getDeviceId(), orderId);
             return res;
         } catch (IOException e) {
             emitStatus("CREATE_PASSIVATE", "ERROR");

@@ -1,10 +1,7 @@
 package com.enigoo.terminal.csob;
 
-import com.enigoo.terminal.EnigooTerminalModule;
 import com.enigoo.terminal.csob.enums.ProtocolTypes;
 import com.enigoo.terminal.csob.enums.TransactionTypes;
-import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.WritableMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,17 +36,6 @@ public class Payment {
       count += s.length();
 
     }
-
-        /*int count = message.length + 1;
-        for (String s : message) {
-            if (s.startsWith("9S")) {
-                count += message[0].length();
-                count += message[0].length();
-                count += message[0].length();
-            }
-            count += message[0].length();
-        }*/
-
     String string = Integer.toHexString(count);
     string = string.toUpperCase();
     if (string.length() < 4) {

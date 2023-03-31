@@ -42,7 +42,7 @@ public class SocketConnection {
     }
     public static void init(String ipAddress, int port, String devId) {
         try {
-            if (!isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
+            if (socket==null || !isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
                 close();
                 deviceId = devId;
                 por = port;
@@ -128,7 +128,7 @@ public class SocketConnection {
     }
 
     public static boolean send(byte[] message) throws IOException {
-        if (!isOpen) {
+        if (!isOpen || socket==null) {
             try {
                 socket = new Socket();
                 SocketAddress address = new InetSocketAddress(ipAddr, por);
@@ -138,7 +138,7 @@ public class SocketConnection {
                 isOpen = false;
             }
         }
-        if (isOpen) {
+        if (isOpen && socket.isConnected()) {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.write(message);
             out.flush();
@@ -149,7 +149,7 @@ public class SocketConnection {
     }
 
     public static byte[] read(int timeInSeconds) throws IOException {
-        if (!isOpen) {
+        if (!isOpen || socket==null) {
             try {
                 socket = new Socket();
                 SocketAddress address = new InetSocketAddress(ipAddr, por);
@@ -159,7 +159,7 @@ public class SocketConnection {
                 isOpen = false;
             }
         }
-        if (isOpen) {
+        if (isOpen && socket.isConnected()) {
             if (timeInSeconds > 0) {
                 socket.setSoTimeout(timeInSeconds * 1000);
             }
