@@ -1,5 +1,6 @@
 package com.enigoo.terminal.csob;
 
+
 import com.enigoo.terminal.EnigooTerminalModule;
 import com.enigoo.terminal.csob.enums.TransactionTypes;
 import com.enigoo.terminal.csob.logger.Logger;
@@ -8,6 +9,7 @@ import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableMap;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,6 +36,9 @@ public class ProcessMessage implements Runnable {
     final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     public byte[] bytesToMessage(byte[] bytes) {
+        if (bytes == null) {
+            return new byte[0];
+        }
         char[] hexChars = new char[bytes.length * 2];
         int count = 0;
         for (int j = 0; j < bytes.length; j++) {
@@ -112,15 +117,26 @@ public class ProcessMessage implements Runnable {
                 }
             }
 
-        }catch (SocketTimeoutException ex) {
+        } catch (SocketTimeoutException ex) {
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
+            EnigooTerminalModule.emit(response.toReactObject());
+        } catch (SocketException exp) {
+            Response res = processPassivate();
+            if (res == null) {
+                res = new Response(null, "0");
+            }
+            res.setMessages(messages);
+            EnigooTerminalModule.emit(res.toReactObject());
         } catch (IOException e) {
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
             EnigooTerminalModule.emit(response.toReactObject());
+            WritableMap map = Arguments.createMap();
+            map.putString("ERROR", e.toString());
+            EnigooTerminalModule.emit(map);
         }
 
     }
@@ -131,7 +147,7 @@ public class ProcessMessage implements Runnable {
 
         SocketConnection.send(t80Req);
 
-        ResponseMessage resMess = new ResponseMessage(new Date(), t80Req,false);
+        ResponseMessage resMess = new ResponseMessage(new Date(), t80Req, false);
         messages.add(resMess);
         Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
         Response responseForT80 = waitForResponse(5);
@@ -139,7 +155,6 @@ public class ProcessMessage implements Runnable {
             emitStatus("CONNECTION", "SUCCESS");
             return true;
         } else {
-            emitStatus("CONNECTION", "ERROR");
             responseForT80.setMessages(messages);
             EnigooTerminalModule.emit(responseForT80.toReactObject());
             return false;
@@ -149,7 +164,7 @@ public class ProcessMessage implements Runnable {
 
     private void activateRequest() throws IOException {
         boolean result = SocketConnection.send(message);
-        ResponseMessage resMess = new ResponseMessage(new Date(), message,false);
+        ResponseMessage resMess = new ResponseMessage(new Date(), message, false);
         messages.add(resMess);
         Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
         if (result) {
@@ -170,7 +185,7 @@ public class ProcessMessage implements Runnable {
             //Potvrď přijetí zprávy B2 pomocí zprávy B0
             byte[] req = payment.createConfirmRequest();
             SocketConnection.send(req);
-            ResponseMessage resMess = new ResponseMessage(new Date(), req,false);
+            ResponseMessage resMess = new ResponseMessage(new Date(), req, false);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
@@ -178,7 +193,7 @@ public class ProcessMessage implements Runnable {
                 //Vyzadej si T82 - lastTransaction a porovnej
                 byte[] reqT82 = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
                 SocketConnection.send(reqT82);
-                ResponseMessage resMessT82 = new ResponseMessage(new Date(), reqT82,false);
+                ResponseMessage resMessT82 = new ResponseMessage(new Date(), reqT82, false);
                 messages.add(resMessT82);
                 Logger.log(resMessT82, resMessT82.getDate(), SocketConnection.getDeviceId(), orderId);
                 Response responseT82 = waitForResponse(5);
@@ -201,7 +216,7 @@ public class ProcessMessage implements Runnable {
             //Proveď passivate
             byte[] reqPassivate = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
             SocketConnection.send(reqPassivate);
-            ResponseMessage resMess = new ResponseMessage(new Date(), reqPassivate,false);
+            ResponseMessage resMess = new ResponseMessage(new Date(), reqPassivate, false);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
 
@@ -211,7 +226,7 @@ public class ProcessMessage implements Runnable {
             //Získej data o poslední transakci
             byte[] reqGetLastTr = payment.createRequest(TransactionTypes.GET_LAST_TRANS, 0, null);
             SocketConnection.send(reqGetLastTr);
-            ResponseMessage resMessLstTr = new ResponseMessage(new Date(), reqGetLastTr,false);
+            ResponseMessage resMessLstTr = new ResponseMessage(new Date(), reqGetLastTr, false);
             messages.add(resMessLstTr);
             Logger.log(resMessLstTr, resMessLstTr.getDate(), SocketConnection.getDeviceId(), orderId);
             return waitForResponse(5);
@@ -231,7 +246,7 @@ public class ProcessMessage implements Runnable {
         boolean next = true;
         while (next) {
             SocketConnection.send(req);
-            ResponseMessage responseMessage = new ResponseMessage(new Date(), req,false);
+            ResponseMessage responseMessage = new ResponseMessage(new Date(), req, false);
             messages.add(responseMessage);
             Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
             response = waitForResponse(5);
@@ -248,22 +263,41 @@ public class ProcessMessage implements Runnable {
         Response res = null;
         while (!isDone) {
             byte[] data = SocketConnection.read(timeoutInSeconds);
-            assert data != null;
             byte[] msg = bytesToMessage(data);
-            ResponseMessage resMess = new ResponseMessage(new Date(), msg,true);
+            ResponseMessage resMess = new ResponseMessage(new Date(), msg, true);
             messages.add(resMess);
             Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
             Message message = new Message(bytesToMessage(data));
             Response response = message.process();
-
             if (response.isDone()) {
                 res = response;
                 return res;
             }
             isDone = response.isDone();
-
         }
         return res;
+
+    }
+
+    private Response processPassivate() {
+        try {
+            byte[] req = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
+            SocketConnection.send(req);
+            emitStatus("CREATE_PASSIVATE", "SUCCESS");
+            ResponseMessage responseMessage = new ResponseMessage(new Date(), req, false);
+            messages.add(responseMessage);
+            Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
+            Response res = waitForResponse(5);
+            byte[] confReq = payment.createConfirmRequest();
+            SocketConnection.send(confReq);
+            ResponseMessage responseMessageConf = new ResponseMessage(new Date(), confReq, false);
+            messages.add(responseMessageConf);
+            Logger.log(responseMessageConf,responseMessageConf.getDate(),SocketConnection.getDeviceId(),orderId);
+            return res;
+        } catch (IOException e) {
+            emitStatus("CREATE_PASSIVATE", "ERROR");
+            return null;
+        }
 
     }
 
