@@ -119,13 +119,6 @@ public class ProcessMessage implements Runnable {
             }
 
         } catch (SocketTimeoutException ex) {
-            WritableMap map =Arguments.createMap();
-            map.putBoolean("is_connected",SocketConnection.socket.isConnected());
-            map.putBoolean("is_closed",SocketConnection.socket.isClosed());
-            map.putBoolean("is_bound",SocketConnection.socket.isBound());
-            map.putBoolean("is_input_shut",SocketConnection.socket.isInputShutdown());
-            map.putBoolean("is_output_shut",SocketConnection.socket.isOutputShutdown());
-            EnigooTerminalModule.emit(map);
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
@@ -133,21 +126,15 @@ public class ProcessMessage implements Runnable {
         } catch (SocketException exp) {
             Response res = null;
             if (((ConnectionThread) Thread.currentThread()).isPassivating()) {
-                res = processPassivate();
+                res = processPassivate(true);
             }
             if (res == null) {
+                SocketConnection.close();
                 res = new Response(null, "0");
             }
             res.setMessages(messages);
             EnigooTerminalModule.emit(res.toReactObject());
         } catch (IOException e) {
-            WritableMap map =Arguments.createMap();
-            map.putBoolean("is_connected",SocketConnection.socket.isConnected());
-            map.putBoolean("is_closed",SocketConnection.socket.isClosed());
-            map.putBoolean("is_bound",SocketConnection.socket.isBound());
-            map.putBoolean("is_input_shut",SocketConnection.socket.isInputShutdown());
-            map.putBoolean("is_output_shut",SocketConnection.socket.isOutputShutdown());
-            EnigooTerminalModule.emit(map);
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
@@ -158,23 +145,51 @@ public class ProcessMessage implements Runnable {
 
     private boolean verifyConnection() throws IOException {
         byte[] t80Req = payment.createRequest(TransactionTypes.GET_APP_INFO, 0, null);
-        boolean result = false;
 
-        SocketConnection.send(t80Req);
+        try{
+            SocketConnection.send(t80Req);
+
+        }catch (IOException ex){
+            SocketConnection.close();
+            SocketConnection.send(t80Req);
+        }
+
 
         ResponseMessage resMess = new ResponseMessage(new Date(), t80Req, false);
         messages.add(resMess);
         Logger.log(resMess, resMess.getDate(), SocketConnection.getDeviceId(), orderId);
-        Response responseForT80 = waitForResponse(5);
-        if (responseForT80.getResponseType().equals("000")) {
-            emitStatus("CONNECTION", "SUCCESS");
-            return true;
-        } else {
-            responseForT80.setMessages(messages);
-            EnigooTerminalModule.emit(responseForT80.toReactObject());
-            return false;
-        }
+        Response responseForT80 = null;
 
+        try{
+            responseForT80 = waitForResponse(5);
+        }catch (IOException ex){
+            responseForT80 = waitForResponse(5);
+        }
+        switch (responseForT80.getResponseType()){
+            case "-02":
+                if(SocketConnection.isReinit){
+                    Response res = processPassivate(false);
+                    SocketConnection.isReinit = false;
+                    if(res!=null && res.getResponseType().equals("-01")){
+                        return true;
+                    }else{
+                        responseForT80.setMessages(messages);
+                        EnigooTerminalModule.emit(responseForT80.toReactObject());
+                        return false;
+                    }
+                }else{
+                    responseForT80.setMessages(messages);
+                    EnigooTerminalModule.emit(responseForT80.toReactObject());
+                    return false;
+                }
+            case "000":
+                emitStatus("CONNECTION", "SUCCESS");
+                return true;
+            default:
+                responseForT80.setMessages(messages);
+                EnigooTerminalModule.emit(responseForT80.toReactObject());
+                return false;
+        }
     }
 
     private void activateRequest() throws IOException {
@@ -290,11 +305,11 @@ public class ProcessMessage implements Runnable {
 
     }
 
-    private Response processPassivate() {
+    private Response processPassivate(boolean emit) {
         try {
             byte[] req = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
             SocketConnection.send(req);
-            emitStatus("CREATE_PASSIVATE", "SUCCESS");
+            if(emit) emitStatus("CREATE_PASSIVATE", "SUCCESS");
             ResponseMessage responseMessage = new ResponseMessage(new Date(), req, false);
             messages.add(responseMessage);
             Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
@@ -306,7 +321,7 @@ public class ProcessMessage implements Runnable {
             Logger.log(responseMessageConf, responseMessageConf.getDate(), SocketConnection.getDeviceId(), orderId);
             return res;
         } catch (IOException e) {
-            emitStatus("CREATE_PASSIVATE", "ERROR");
+            if(emit) emitStatus("CREATE_PASSIVATE", "ERROR");
             return null;
         }
 

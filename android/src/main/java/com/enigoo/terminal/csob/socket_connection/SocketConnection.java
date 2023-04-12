@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.util.Date;
 
 public class SocketConnection {
@@ -28,11 +29,13 @@ public class SocketConnection {
     private static String ipAddr = "";
     private static int por = 0;
 
+    public static boolean isReinit = false;
+
     public static String getDeviceId() {
         return deviceId;
     }
 
-    public static void interrupt(){
+    public static void interrupt() {
         try {
             socket.close();
             isOpen = false;
@@ -42,20 +45,22 @@ public class SocketConnection {
     }
 
     public static void open() throws IOException {
-      close();
-      socket = new Socket();
-      SocketAddress address = new InetSocketAddress(ipAddr, por);
-      socket.connect(address);
-
-      isOpen = true;
+        close();
+        socket = new Socket();
+        SocketAddress address = new InetSocketAddress(ipAddr, por);
+        socket.connect(address, 3000);
+        isOpen = true;
+        isReinit = true;
     }
+
     public static void init(String ipAddress, int port, String devId) {
         try {
-            if (socket==null || !isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
-              deviceId = devId;
-              por = port;
-              ipAddr = ipAddress;
-              open();
+            if (socket == null || !isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
+                deviceId = devId;
+                por = port;
+                ipAddr = ipAddress;
+                open();
+                isReinit = false;
             }
             if (verifyConnection()) {
                 WritableMap map = Arguments.createMap();
@@ -69,7 +74,6 @@ public class SocketConnection {
             WritableMap map = Arguments.createMap();
             map.putString("type", "INIT_CONNECTION");
             map.putString("status", "ERROR");
-            map.putString("ex", e.toString());
             EnigooTerminalModule.emit(map);
             isOpen = false;
         }
@@ -98,6 +102,8 @@ public class SocketConnection {
                 Logger.log(new ResponseMessage(new Date(), reqConf, false), new Date(), deviceId, "PASSIVATE");
             }
             return true;
+        } catch (SocketException ex) {
+            return false;
         } catch (IOException ex) {
             return false;
         }
@@ -133,14 +139,14 @@ public class SocketConnection {
     }
 
     public static boolean send(byte[] message) throws IOException {
-        if (!isOpen || socket==null) {
+        if ((!isOpen || socket == null)) {
             try {
                 open();
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 isOpen = false;
             }
         }
-        if (isOpen && socket.isConnected()) {
+        if (socket!=null && isOpen) {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.write(message);
             out.flush();
@@ -151,14 +157,14 @@ public class SocketConnection {
     }
 
     public static byte[] read(int timeInSeconds) throws IOException {
-        if (!isOpen || socket==null) {
+        if (!isOpen || socket == null) {
             try {
                 open();
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 isOpen = false;
             }
         }
-        if (isOpen && socket.isConnected()) {
+        if (socket!=null && isOpen) {
             if (timeInSeconds > 0) {
                 socket.setSoTimeout(timeInSeconds * 1000);
             }
@@ -171,7 +177,7 @@ public class SocketConnection {
     }
 
     public static void close() {
-        if (socket!=null && isOpen) {
+        if (socket != null) {
             try {
                 socket.close();
                 isOpen = false;

@@ -243,40 +243,44 @@ public class Response {
         } else {
             params.putString("type", "CONNECTION");
         }
-        switch (this.responseType) {
-            case SUCCESS:
-                params.putString("status", "SUCCESS");
-                break;
-            case USER_CANCEL:
-                params.putString("status", "CANCEL");
-                break;
-            case CARD_ERROR:
-                params.putString("status", "CARD_ERROR");
-                break;
-            case CARD_EXPIRED:
-                params.putString("status", "CARD_EXPIRED");
-                break;
-            case CARD_YOUNG:
-                params.putString("status", "CARD_YOUNG");
-                break;
-            case CARD_NO_ENOUGH_MONEY:
-                params.putString("status", "CARD_NO_ENOUGH_MONEY");
-                break;
-            case TIMEOUT:
-                params.putString("status", "TIMEOUT");
-                break;
-            case CARD_BLOCKED:
-                params.putString("status", "CARD_BLOCKED");
-                break;
-            case "0":
-                params.putString("status", "LOST");
-                break;
-            case MERCH_ERR_CANTDOIT:
-                params.putString("status", "MERCH_ERR_CANTDOIT");
-                break;
-            default:
-                params.putString("status", "DEFAULT_ERROR");
-                break;
+        if (this.responseType == null) {
+            params.putString("status", "DEFAULT_ERROR");
+        } else {
+            switch (this.responseType) {
+                case SUCCESS:
+                    params.putString("status", "SUCCESS");
+                    break;
+                case USER_CANCEL:
+                    params.putString("status", "CANCEL");
+                    break;
+                case CARD_ERROR:
+                    params.putString("status", "CARD_ERROR");
+                    break;
+                case CARD_EXPIRED:
+                    params.putString("status", "CARD_EXPIRED");
+                    break;
+                case CARD_YOUNG:
+                    params.putString("status", "CARD_YOUNG");
+                    break;
+                case CARD_NO_ENOUGH_MONEY:
+                    params.putString("status", "CARD_NO_ENOUGH_MONEY");
+                    break;
+                case TIMEOUT:
+                    params.putString("status", "TIMEOUT");
+                    break;
+                case CARD_BLOCKED:
+                    params.putString("status", "CARD_BLOCKED");
+                    break;
+                case "0":
+                    params.putString("status", "LOST");
+                    break;
+                case MERCH_ERR_CANTDOIT:
+                    params.putString("status", "MERCH_ERR_CANTDOIT");
+                    break;
+                default:
+                    params.putString("status", "DEFAULT_ERROR");
+                    break;
+            }
         }
         WritableArray arrayMerch = Arguments.createArray();
         for (String row : getMerchantRecipe()) {
