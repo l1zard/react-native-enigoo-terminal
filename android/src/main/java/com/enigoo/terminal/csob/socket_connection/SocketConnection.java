@@ -20,7 +20,7 @@ import java.util.Date;
 
 public class SocketConnection {
 
-    private static Socket socket;
+    public static Socket socket;
 
     private static boolean isOpen = false;
 
@@ -40,18 +40,22 @@ public class SocketConnection {
         }
 
     }
+
+    public static void open() throws IOException {
+      close();
+      socket = new Socket();
+      SocketAddress address = new InetSocketAddress(ipAddr, por);
+      socket.connect(address);
+
+      isOpen = true;
+    }
     public static void init(String ipAddress, int port, String devId) {
         try {
             if (socket==null || !isOpen || !ipAddr.equals(ipAddress) || port != por || !deviceId.equals(devId)) {
-                close();
-                deviceId = devId;
-                por = port;
-                ipAddr = ipAddress;
-                socket = new Socket();
-                SocketAddress address = new InetSocketAddress(ipAddr, por);
-                socket.connect(address, 3000);
-
-                isOpen = true;
+              deviceId = devId;
+              por = port;
+              ipAddr = ipAddress;
+              open();
             }
             if (verifyConnection()) {
                 WritableMap map = Arguments.createMap();
@@ -65,6 +69,7 @@ public class SocketConnection {
             WritableMap map = Arguments.createMap();
             map.putString("type", "INIT_CONNECTION");
             map.putString("status", "ERROR");
+            map.putString("ex", e.toString());
             EnigooTerminalModule.emit(map);
             isOpen = false;
         }
@@ -130,10 +135,7 @@ public class SocketConnection {
     public static boolean send(byte[] message) throws IOException {
         if (!isOpen || socket==null) {
             try {
-                socket = new Socket();
-                SocketAddress address = new InetSocketAddress(ipAddr, por);
-                socket.connect(address, 3000);
-                isOpen = true;
+                open();
             } catch (IOException e) {
                 isOpen = false;
             }
@@ -151,10 +153,7 @@ public class SocketConnection {
     public static byte[] read(int timeInSeconds) throws IOException {
         if (!isOpen || socket==null) {
             try {
-                socket = new Socket();
-                SocketAddress address = new InetSocketAddress(ipAddr, por);
-                socket.connect(address, 3000);
-                isOpen = true;
+                open();
             } catch (IOException e) {
                 isOpen = false;
             }
@@ -172,7 +171,7 @@ public class SocketConnection {
     }
 
     public static void close() {
-        if (isOpen) {
+        if (socket!=null && isOpen) {
             try {
                 socket.close();
                 isOpen = false;

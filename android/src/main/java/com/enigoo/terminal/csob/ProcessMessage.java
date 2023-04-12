@@ -119,6 +119,13 @@ public class ProcessMessage implements Runnable {
             }
 
         } catch (SocketTimeoutException ex) {
+            WritableMap map =Arguments.createMap();
+            map.putBoolean("is_connected",SocketConnection.socket.isConnected());
+            map.putBoolean("is_closed",SocketConnection.socket.isClosed());
+            map.putBoolean("is_bound",SocketConnection.socket.isBound());
+            map.putBoolean("is_input_shut",SocketConnection.socket.isInputShutdown());
+            map.putBoolean("is_output_shut",SocketConnection.socket.isOutputShutdown());
+            EnigooTerminalModule.emit(map);
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
@@ -134,6 +141,13 @@ public class ProcessMessage implements Runnable {
             res.setMessages(messages);
             EnigooTerminalModule.emit(res.toReactObject());
         } catch (IOException e) {
+            WritableMap map =Arguments.createMap();
+            map.putBoolean("is_connected",SocketConnection.socket.isConnected());
+            map.putBoolean("is_closed",SocketConnection.socket.isClosed());
+            map.putBoolean("is_bound",SocketConnection.socket.isBound());
+            map.putBoolean("is_input_shut",SocketConnection.socket.isInputShutdown());
+            map.putBoolean("is_output_shut",SocketConnection.socket.isOutputShutdown());
+            EnigooTerminalModule.emit(map);
             SocketConnection.close();
             Response response = new Response(null, "0");
             response.setMessages(messages);
