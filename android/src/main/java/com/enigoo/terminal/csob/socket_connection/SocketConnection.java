@@ -74,6 +74,7 @@ public class SocketConnection {
             WritableMap map = Arguments.createMap();
             map.putString("type", "INIT_CONNECTION");
             map.putString("status", "ERROR");
+            map.putString("ex", e.toString());
             EnigooTerminalModule.emit(map);
             isOpen = false;
         }
@@ -139,14 +140,14 @@ public class SocketConnection {
     }
 
     public static boolean send(byte[] message) throws IOException {
-        if ((!isOpen || socket == null)) {
+      if (!isOpen || socket == null || socket.isClosed() || !socket.isConnected()) {
             try {
                 open();
             } catch (IOException ex) {
                 isOpen = false;
             }
         }
-        if (socket!=null && isOpen) {
+        if (socket!=null && isOpen && !socket.isClosed()) {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.write(message);
             out.flush();
@@ -157,14 +158,14 @@ public class SocketConnection {
     }
 
     public static byte[] read(int timeInSeconds) throws IOException {
-        if (!isOpen || socket == null) {
+        if (!isOpen || socket == null || socket.isClosed() || !socket.isConnected()) {
             try {
                 open();
             } catch (IOException ex) {
                 isOpen = false;
             }
         }
-        if (socket!=null && isOpen) {
+        if (socket!=null && isOpen && !socket.isClosed()) {
             if (timeInSeconds > 0) {
                 socket.setSoTimeout(timeInSeconds * 1000);
             }

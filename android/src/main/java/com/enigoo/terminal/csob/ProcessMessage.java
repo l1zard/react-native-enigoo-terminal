@@ -306,25 +306,34 @@ public class ProcessMessage implements Runnable {
     }
 
     private Response processPassivate(boolean emit) {
-        try {
-            byte[] req = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
-            SocketConnection.send(req);
-            if(emit) emitStatus("CREATE_PASSIVATE", "SUCCESS");
-            ResponseMessage responseMessage = new ResponseMessage(new Date(), req, false);
-            messages.add(responseMessage);
-            Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
-            Response res = waitForResponse(5);
-            byte[] confReq = payment.createConfirmRequest();
-            SocketConnection.send(confReq);
-            ResponseMessage responseMessageConf = new ResponseMessage(new Date(), confReq, false);
-            messages.add(responseMessageConf);
-            Logger.log(responseMessageConf, responseMessageConf.getDate(), SocketConnection.getDeviceId(), orderId);
+        try{
+            Response res = sendPassivate(emit);
             return res;
-        } catch (IOException e) {
-            if(emit) emitStatus("CREATE_PASSIVATE", "ERROR");
-            return null;
+        }catch (IOException ex){
+            try {
+                Response res = sendPassivate(emit);
+                return res;
+            } catch (IOException e) {
+                if(emit) emitStatus("CREATE_PASSIVATE", "ERROR");
+                return null;
+            }
         }
+    }
 
+    private Response sendPassivate(boolean emit) throws IOException {
+        byte[] req = payment.createRequest(TransactionTypes.PASSIVATE, 0, null);
+        SocketConnection.send(req);
+        if(emit) emitStatus("CREATE_PASSIVATE", "SUCCESS");
+        ResponseMessage responseMessage = new ResponseMessage(new Date(), req, false);
+        messages.add(responseMessage);
+        Logger.log(responseMessage, responseMessage.getDate(), SocketConnection.getDeviceId(), orderId);
+        Response res = waitForResponse(10);
+        byte[] confReq = payment.createConfirmRequest();
+        SocketConnection.send(confReq);
+        ResponseMessage responseMessageConf = new ResponseMessage(new Date(), confReq, false);
+        messages.add(responseMessageConf);
+        Logger.log(responseMessageConf, responseMessageConf.getDate(), SocketConnection.getDeviceId(), orderId);
+        return res;
     }
 
     private void emitStatus(String type, String status) {
