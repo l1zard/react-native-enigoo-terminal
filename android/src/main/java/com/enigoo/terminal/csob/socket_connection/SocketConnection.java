@@ -88,9 +88,11 @@ public class SocketConnection {
       byte[] req = pay.createRequest(TransactionTypes.GET_APP_INFO, 0, null);
       send(req);
       Logger.log(new ResponseMessage(new Date(), req, false), new Date(), deviceId, "GET_INFO");
+
       byte[] res = read(5);
       List<byte[]> bytesMessages = bytesToMessage(res);
       if (bytesMessages.size() == 0) return false;
+
       List<Response> responses = new ArrayList<>();
       for (byte[] b : bytesMessages) {
         Logger.log(new ResponseMessage(new Date(), b, true), new Date(), deviceId, "GET_INFO");
@@ -99,6 +101,10 @@ public class SocketConnection {
         responses.add(message.process());
       }
 
+      byte[] reqConf = pay.createConfirmRequest();
+      send(reqConf);
+      Logger.log(new ResponseMessage(new Date(), reqConf, false), new Date(), deviceId, "GET_INFO");
+
       for (Response resp : responses) {
         if (resp != null && resp.getResponseType() != null && !resp.getResponseType().equals("000")) {
           byte[] reqPass = pay.createRequest(TransactionTypes.PASSIVATE, 0, null);
@@ -106,9 +112,9 @@ public class SocketConnection {
           Logger.log(new ResponseMessage(new Date(), reqPass, false), new Date(), deviceId, "PASSIVATE");
           byte[] resPass = read(5);
           Logger.log(new ResponseMessage(new Date(), resPass, true), new Date(), deviceId, "PASSIVATE");
-          byte[] reqConf = pay.createConfirmRequest();
-          send(reqConf);
-          Logger.log(new ResponseMessage(new Date(), reqConf, false), new Date(), deviceId, "PASSIVATE");
+          byte[] reqConfPass = pay.createConfirmRequest();
+          send(reqConfPass);
+          Logger.log(new ResponseMessage(new Date(), reqConfPass, false), new Date(), deviceId, "PASSIVATE");
         }
       }
 
