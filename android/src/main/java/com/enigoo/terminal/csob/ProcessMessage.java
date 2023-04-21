@@ -269,6 +269,14 @@ public class ProcessMessage implements Runnable {
         messages.add(resMessT82);
         Logger.log(resMessT82, resMessT82.getDate(), SocketConnection.getDeviceId(), orderId);
         Response responseT82 = waitForResponse(5);
+
+        //TODO:Potvrzení přijetí
+        byte[] confReq = payment.createConfirmRequest();
+        ResponseMessage responseMessageConf = new ResponseMessage(new Date(), confReq, false);
+        messages.add(responseMessageConf);
+        Logger.log(responseMessageConf, responseMessageConf.getDate(), SocketConnection.getDeviceId(), orderId);
+        SocketConnection.send(confReq);
+
         //Porovnat OrderId - FID 9S
         if (!responseT82.compare(response)) {
           //pokud se nerovná nic neprováděj dál... Vrať pokladně, že nelze provést
