@@ -235,9 +235,10 @@ public class Response {
     WritableMap params = Arguments.createMap();
     params.putBoolean("sign", isWantSign());
 
-    if (isWantSign()) {
+    //TODO: vraci se teď vždy po provedení transakce
+    //if (isWantSign()) {
       params.putString("approvalCode", parseApprovalCode());
-    }
+    //}
 
     if (transactionType != null) {
       params.putString("type", this.transactionType.getName());
