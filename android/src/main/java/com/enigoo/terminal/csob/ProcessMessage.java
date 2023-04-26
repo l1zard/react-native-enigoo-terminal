@@ -202,11 +202,12 @@ public class ProcessMessage implements Runnable {
     }
 
     //Potvrď přijetí zprávy B2 pomocí zprávy B0
-    byte[] req = payment.createConfirmRequest();
-    SocketConnection.send(req);
-    ResponseMessage resMessConf = new ResponseMessage(new Date(), req, false);
+    byte[] reqConf = payment.createConfirmRequest();
+    SocketConnection.send(reqConf);
+    ResponseMessage resMessConf = new ResponseMessage(new Date(), reqConf, false);
     messages.add(resMessConf);
-    Logger.log(resMess, resMessConf.getDate(), SocketConnection.getDeviceId(), orderId);
+    Logger.log(resMessConf, resMessConf.getDate(), SocketConnection.getDeviceId(), orderId);
+    
     switch (responseForT80.getResponseType()) {
       case "-02":
         if (SocketConnection.isReinit) {
